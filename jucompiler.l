@@ -3,9 +3,9 @@
     //Rui Alexandre Coelho Tapadinhas   2018283200
 
   int line = 1;
-	int col = 1;
+  int col = 1;
   int error_line = 1;
-	int error_col = 1;
+  int error_col = 1;
 %}
 
 id					"_"|"$"|("_"|"$"|[a-z]|[A-Z])([a-z]|[A-Z]|[0-9]|"$"|"_")*
@@ -15,9 +15,11 @@ real				([0-9]+("_"*[0-9]|[0-9])*"."[0-9]*("_"*[0-9]|[0-9])*)|([0-9]*("_"*[0-9]|
 expint				[0-9]+("_"*[0-9]|[0-9])*[eE][+-]*[0-9]+("_"*[0-9]|[0-9])*
 expreal				([0-9]+("_"*[0-9]|[0-9])*"."([0-9]*("_"*[0-9]|[0-9])*)*)|([0-9]*("_"*[0-9]|[0-9])*"."([0-9]+("_"*[0-9]|[0-9])*)*)[eE][+-]*[0-9]+("_"*[0-9]|[0-9])*
 
+strlit				([^\n\r\\"]|\\f|\\n|\\r|\\t|\\\\|\\\")*
+
 reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"switch"|"assert"|"default"|"package"|"synchronized"|"do"|"goto"|"private"|"this"|"break"|"implements"|"protected"|"throw"|"byte"|"import"|"throws"|"case"|"enum"|"instanceof"|"transient"|"catch"|"extends"|"short"|"try"|"char"|"final"|"interface"|"finally"|"long"|"strictfp"|"volatile"|"const"|"float"|"native"|"super"|"for"
 
-%X COMMENT MULTIPLECOMMENT
+%X COMMENT MULTIPLECOMMENT STRLIT
 %%
 
 {intlit}								{printf("INTLIT(%s)\n",yytext);col+=yyleng;}
@@ -82,6 +84,12 @@ reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"swit
 <MULTIPLECOMMENT>\n|\r|(\r\n)			{col=1;line+=1;}
 <MULTIPLECOMMENT>.						{col+=yyleng;}
 <MULTIPLECOMMENT><<EOF>>				{printf("Line %d, col %d: unterminated comment\n", error_line, error_col); BEGIN 0;col+=yyleng;}
+
+"\""									{BEGIN STRLIT; col+=yyleng;}
+<STRLIT>{strlit}						{printf("STRLIT(\"%s\")\n", yytext); col+=yyleng;}
+<STRLIT>\\(.?)							{printf("Line %d, col %d: invalid escape sequence (%s)\n",error_line, error_col, yytext); col+=yyleng;}
+<STRLIT>\"								{BEGIN 0; col+=yyleng;}
+
 
 
 " "|"\t"|"\f"                           {col+=yyleng;}
