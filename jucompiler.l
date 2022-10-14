@@ -6,6 +6,9 @@
   int col = 1;
   int error_line = 1;
   int error_col = 1;
+  int strlit_error = 0;
+  char* strlit;
+
 %}
 
 id					"_"|"$"|("_"|"$"|[a-z]|[A-Z])([a-z]|[A-Z]|[0-9]|"$"|"_")*
@@ -18,6 +21,7 @@ expreal				([0-9]+("_"*[0-9]|[0-9])*"."([0-9]*("_"*[0-9]|[0-9])*)*)|([0-9]*("_"*
 strlit				([^\n\r\\"]|\\f|\\n|\\r|\\t|\\\\|\\\")*
 
 reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"switch"|"assert"|"default"|"package"|"synchronized"|"do"|"goto"|"private"|"this"|"break"|"implements"|"protected"|"throw"|"byte"|"import"|"throws"|"case"|"enum"|"instanceof"|"transient"|"catch"|"extends"|"short"|"try"|"char"|"final"|"interface"|"finally"|"long"|"strictfp"|"volatile"|"const"|"float"|"native"|"super"|"for"
+illegal				"."
 
 %X COMMENT MULTIPLECOMMENT STRLIT
 %%
@@ -25,6 +29,8 @@ reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"swit
 {intlit}								{printf("INTLIT(%s)\n",yytext);col+=yyleng;}
 
 {real}|{expint}|{expreal}				{printf("REALLIT(%s)\n",yytext);col+=yyleng;}
+
+{illegal}								{printf("Line %d, col %d: illegal character (%s)\n", line, col, yytext); col+=yyleng;}
 
 "true"|"false"					        {printf("BOOLLIT(%s)\n",yytext);col+=yyleng;}
 "&&"							        {printf("AND\n");col+=yyleng;}
@@ -75,25 +81,25 @@ reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"swit
 {id}									{printf("ID(%s)\n",yytext);col+=yyleng;}
 
 "//"									{BEGIN COMMENT; error_col=col; error_line=line; col+=yyleng;}
-<COMMENT>\n|\r|(\r\n)					{BEGIN 0;col=1;line+=1;}
-<COMMENT><<EOF>>				      {BEGIN 0;col+=yyleng;}
+<COMMENT>\n|\r|(\r\n)					{BEGIN 0;col=1;line++;}
+<COMMENT><<EOF>>				      	{BEGIN 0;col+=yyleng;}
 <COMMENT>.								{col+=yyleng;}
 
 "/*"									{BEGIN MULTIPLECOMMENT; error_col=col; error_line=line; col+=yyleng;}
 <MULTIPLECOMMENT>"*/"				    {BEGIN 0;col+=yyleng;}
-<MULTIPLECOMMENT>\n|\r|(\r\n)			{col=1;line+=1;}
+<MULTIPLECOMMENT>\n|\r|(\r\n)			{col=1;line++;}
 <MULTIPLECOMMENT>.						{col+=yyleng;}
 <MULTIPLECOMMENT><<EOF>>				{printf("Line %d, col %d: unterminated comment\n", error_line, error_col); BEGIN 0;col+=yyleng;}
 
-"\""									{BEGIN STRLIT; col+=yyleng;}
-<STRLIT>{strlit}						{printf("STRLIT(\"%s\")\n", yytext); col+=yyleng;}
-<STRLIT>\\(.?)							{printf("Line %d, col %d: invalid escape sequence (%s)\n",error_line, error_col, yytext); col+=yyleng;}
-<STRLIT>\"								{BEGIN 0; col+=yyleng;}
+"\""									{BEGIN STRLIT; error_col=col; error_line=line; col+=yyleng;}
+<STRLIT>{strlit}						{strlit = yytext; col+=yyleng;}
+<STRLIT>\\(.?)							{printf("Line %d, col %d: invalid escape sequence (%s)\n",error_line, col, yytext); strlit_error = 1; col+=yyleng;}
+<STRLIT>\"								{BEGIN 0; if (!strlit_error) {printf("STRLIT(\"%s)\n", strlit);} strlit_error = 0; col+=yyleng;}
 
 
 
 " "|"\t"|"\f"                           {col+=yyleng;}
-"\n"|"\r"|"\r""\n"                      {col=1;line+=1;}
+"\n"|"\r"|"\r\n"                      {col=1;line++;}
 .                                       {col+=yyleng;}
 %%
 
