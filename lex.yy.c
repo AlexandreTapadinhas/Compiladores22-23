@@ -771,7 +771,7 @@ char *yytext;
 #define INITIAL 0
 #define COMMENT 1
 #define MULTIPLECOMMENT 2
-#define STRLIT 3
+#define STRLIT_ST 3
 
 #ifndef YY_NO_UNISTD_H
 /* Special case for "unistd.h", since it is non-ANSI. We include it way
@@ -1336,14 +1336,14 @@ case YY_STATE_EOF(MULTIPLECOMMENT):
 case 57:
 YY_RULE_SETUP
 #line 107 "jucompiler.l"
-{BEGIN STRLIT; strlit_error = 0; strlit = yytext; col+=yyleng; auxCol=col-1;}
+{BEGIN STRLIT_ST; strlit_error = 0; strlit = yytext; col+=yyleng; auxCol=col-1;}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
 #line 108 "jucompiler.l"
 {if(!debugMode && !strlit_error)printf("STRLIT(%s)\n",strlit);col+=yyleng; BEGIN 0; if(debugMode != 1){yylval.strlit = strdup(yytext); return STRLIT;}}
 	YY_BREAK
-case YY_STATE_EOF(STRLIT):
+case YY_STATE_EOF(STRLIT_ST):
 #line 109 "jucompiler.l"
 {printf("Line %d, col %d: unterminated string literal\n",line,auxCol); col+=yyleng; BEGIN 0;}
 	YY_BREAK

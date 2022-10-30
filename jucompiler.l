@@ -31,7 +31,7 @@ strlit				([^\n\r\"\\]|\\f|\\n|\\r|\\t|\\\\|\\\")*
 
 reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"switch"|"assert"|"default"|"package"|"synchronized"|"do"|"goto"|"private"|"this"|"break"|"implements"|"protected"|"throw"|"byte"|"import"|"throws"|"case"|"enum"|"instanceof"|"transient"|"catch"|"extends"|"short"|"try"|"char"|"final"|"interface"|"finally"|"long"|"strictfp"|"volatile"|"const"|"float"|"native"|"super"|"for"
 
-%X COMMENT MULTIPLECOMMENT STRLIT
+%X COMMENT MULTIPLECOMMENT STRLIT_ST
 %%
 
 {intlit}								{if(!debugMode)printf("INTLIT(%s)\n",yytext);col+=yyleng; if(debugMode != 1){yylval.intlit = strdup(yytext); return INTLIT;}}
@@ -104,12 +104,12 @@ reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"swit
 <MULTIPLECOMMENT>.						  {col+=yyleng;}
 <MULTIPLECOMMENT><<EOF>>				{printf("Line %d, col %d: unterminated comment\n", auxLine, auxCol);col+=yyleng;BEGIN 0;}
 
-\"										      {BEGIN STRLIT; strlit_error = 0; strlit = yytext; col+=yyleng; auxCol=col-1;}
-<STRLIT>\"								  {if(!debugMode && !strlit_error)printf("STRLIT(%s)\n",strlit);col+=yyleng; BEGIN 0; if(debugMode != 1){yylval.strlit = strdup(yytext); return STRLIT;}}
-<STRLIT><<EOF>>							{printf("Line %d, col %d: unterminated string literal\n",line,auxCol); col+=yyleng; BEGIN 0;}
-<STRLIT>\n|\r|(\r\n)				{col= 1; printf("Line %d, col %d: unterminated string literal\n",line,auxCol); line++; BEGIN 0;}
-<STRLIT>\\[^nfr\\t\r\n\"]?	{printf("Line %d, col %d: invalid escape sequence (%s)\n",line,col, yytext); col += yyleng;strlit_error = 1;}
-<STRLIT>{strlit}						{col+=yyleng;}
+\"										      {BEGIN STRLIT_ST; strlit_error = 0; strlit = yytext; col+=yyleng; auxCol=col-1;}
+<STRLIT_ST>\"								  {if(!debugMode && !strlit_error)printf("STRLIT(%s)\n",strlit);col+=yyleng; BEGIN 0; if(debugMode != 1){yylval.strlit = strdup(yytext); return STRLIT;}}
+<STRLIT_ST><<EOF>>							{printf("Line %d, col %d: unterminated string literal\n",line,auxCol); col+=yyleng; BEGIN 0;}
+<STRLIT_ST>\n|\r|(\r\n)				{col= 1; printf("Line %d, col %d: unterminated string literal\n",line,auxCol); line++; BEGIN 0;}
+<STRLIT_ST>\\[^nfr\\t\r\n\"]?	{printf("Line %d, col %d: invalid escape sequence (%s)\n",line,col, yytext); col += yyleng;strlit_error = 1;}
+<STRLIT_ST>{strlit}						{col+=yyleng;}
 
 .									        {printf("Line %d, col %d: illegal character (%s)\n", line, col, yytext); col+=yyleng;}
 
