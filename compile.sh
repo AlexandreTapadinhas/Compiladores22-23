@@ -1,4 +1,8 @@
 #!/bin/bash
 
+# lex jucompiler.l
+# clang -o jucompiler lex.yy.c
+
 lex jucompiler.l
-clang -o jucompiler lex.yy.c
+yacc jucompiler.y -d --debug --verbose
+clang -o jucompiler lex.yy.c y.tab.c
