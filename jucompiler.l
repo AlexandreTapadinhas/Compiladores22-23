@@ -7,7 +7,6 @@
 	//int yylex(void);
   	void yyerror(const char* s);
 
-	extern int flag_erro;
 
     int line = 1;
     int col = 1;

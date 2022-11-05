@@ -197,18 +197,32 @@ ProgramScript: 	/* empty */											{$$ = NULL;}
 
 MethodDecl:	PUBLIC STATIC MethodHeader MethodBody					{$$ = create_node( "MethodDecl","");
 																	add_child($$, $3);
-																	add_sibling($3, $4);}
+																	add_sibling($3, $4);
+																	}
 		;
 
 FieldDecl:	PUBLIC STATIC Type ID FieldDecl2 SEMICOLON				{$$ = create_node( "FieldDecl", "");
 																	add_child($$, $3);
 																	add_sibling($3, create_node("Id",$4));
+																	if ($5 != NULL){
+																		aux = $5;
+																		while (aux != NULL) {
+																			struct node * aux1 = create_node("FieldDecl","");
+																			struct node * aux2 = create_node($3->type, $3->value);
+																			add_child(aux1, aux2);
+																			add_sibling(aux2, create_node("Id", aux->value));
+																			add_sibling($$, aux1);
+																			aux = aux->bro;
+																		}
+																		free(aux);
 																	}
-		|	error SEMICOLON											{}
+																	}
+		|	error SEMICOLON											{$$ = NULL; flag_erro = 1;}
 		;
 
-FieldDecl2:	/* empty */												{}
-		|	COMMA ID FieldDecl2										{}
+FieldDecl2:	/* empty */												{$$ = NULL;}
+		|	COMMA ID FieldDecl2										{$$ = create_node("Id", $2);
+																	add_sibling($$, $3);}
 		;
 
 Type:	BOOL														{$$ = create_node("Bool","");}
@@ -216,45 +230,144 @@ Type:	BOOL														{$$ = create_node("Bool","");}
 	|	DOUBLE														{$$ = create_node("Double","");}
 	;
 
-MethodHeader:	Type ID LPAR MethodHeader2 RPAR						{}
-			|	VOID ID LPAR MethodHeader2 RPAR						{}
+MethodHeader:	Type ID LPAR MethodHeader2 RPAR						{$$ = create_node("MethodHeader", "");
+																	add_child($$,$1);
+																	add_sibling($1, create_node("Id", $2));
+																	aux = create_node("MethodParams", "");
+																	add_sibling($1, aux);
+																	add_child(aux, $4);}
+			|	VOID ID LPAR MethodHeader2 RPAR						{$$ = create_node("MethodHeader", "");
+																	aux = create_node("Void", "");
+																	add_child($$, aux);
+																	add_sibling(aux, create_node("Id", $2));
+																	struct node * aux2 = create_node("MethodParams", "");
+																	add_sibling(aux, aux2);
+																	add_child(aux2, $4);}
 			;
 
 MethodHeader2:	/* empty */											{$$ = NULL;}
 			|	FormalParams										{$$ = $1;}
 			;
 
-FormalParams:	Type ID FormalParams2								{}
-			|	STRING LSQ RSQ ID									{}
+
+FormalParams:	Type ID FormalParams2								{$$ = create_node("ParamDecl","");
+																	add_child($$, $1);
+																	aux = create_node("Id",$2);
+																	add_sibling($1, aux);
+																	add_sibling($$, $3);}
+			|	STRING LSQ RSQ ID									{$$ = create_node("ParamDecl","");
+																	aux = create_node("StringArray","");
+																	add_child($$, aux);
+																	add_sibling(aux, create_node("Id",$4));}
 			;
 
 FormalParams2:	/* empty */											{$$ = NULL;}
-			|	COMMA Type ID FormalParams2 						{}
+			|	COMMA Type ID FormalParams2 						{$$ = create_node("ParamDecl","");
+																	aux = create_node("Id",$3);
+																	add_child($$, $2);
+																	add_sibling($2, aux);
+																	add_sibling($$, $4);}
 			;
 
-MethodBody:	LBRACE MethodBody2 RBRACE								{}
+MethodBody:	LBRACE MethodBody2 RBRACE								{$$ = create_node("MethodBody","");
+																	add_child($$, $2);}
 		;
 
 MethodBody2: 	/* empty */											{$$ = NULL;}
-			|	Statement MethodBody2								{}
-			|	VarDecl MethodBody2									{}
+			|	Statement MethodBody2								{if ($1 != NULL){
+																		$$ = $1;
+																		add_sibling($$, $2);
+																		}
+																	else {
+																		$$ = $2;
+																	}}
+			|	VarDecl MethodBody2									{$$ = $1;
+																	add_sibling($$, $2);}
 			;
 
-VarDecl:	Type ID VarDecl2 SEMICOLON								{}
+VarDecl:	Type ID VarDecl2 SEMICOLON								{$$ = create_node("VarDecl", "");
+																	add_child($$, $1);
+																	add_sibling($1, create_node("Id", $2));
+																	if ($3 != NULL){
+																		aux = $3;
+																		while (aux != NULL) {
+																			struct node * aux1 = create_node("VarDecl", "");
+																			struct node * aux2 = create_node($1->type, $1->value);
+																			add_child(aux1, aux2);
+																			add_sibling(aux2, create_node("Id", aux->value));
+																			add_sibling($$, aux1);
+																			aux = aux->bro;
+																		}
+																		free(aux);
+																	}}
 		;
 
 VarDecl2:	/* empty */												{$$ = NULL;}
-		|	COMMA ID VarDecl2										{}
+		|	COMMA ID VarDecl2										{$$ = create_node("Id",$2);
+																	add_sibling($$, $3);}
 		;
 
-Statement:	LBRACE Statement2 RBRACE								{}
-		|	IF LPAR Expr RPAR Statement %prec ELSE					{}
-		|	IF LPAR Expr RPAR Statement ELSE Statement				{}
-		|	WHILE LPAR Expr RPAR Statement							{}
-		|	RETURN ExprReturn SEMICOLON								{}
-		|	Statement3 SEMICOLON									{}
-		|	PRINT LPAR StatementPrint RPAR SEMICOLON				{}
-		|	error SEMICOLON											{}
+Statement:	LBRACE Statement2 RBRACE								{if (get_number_siblings($2) > 1) {
+																		aux = create_node("Block","");
+																		$$ = aux;
+																		add_child(aux, $2);
+																	}
+																	else {
+																		$$ = $2;
+																	}}
+		|	IF LPAR Expr RPAR Statement %prec ELSE					{$$ = create_node("If","");
+																	add_child($$,$3);
+																	aux = create_node("Block","");
+																	if (get_number_siblings($5) == 1 && $5 != NULL) {
+																		add_sibling($3, $5);
+																		add_sibling($5, aux);
+																	}
+																	else {
+																		add_sibling($3, aux);
+																		add_child(aux, $5);
+																		add_sibling(aux, create_node("Block",""));
+																	}}
+		|	IF LPAR Expr RPAR Statement ELSE Statement				{$$ = create_node("If","");
+																	add_child($$,$3);
+																	aux = create_node("Block","");
+																	if (get_number_siblings($5) == 1 && $5 != NULL) {
+																		add_sibling($3, $5);
+																		if (get_number_siblings($7) == 1 && $7 != NULL) {
+																			add_sibling($5, $7);
+																		}
+																		else {
+																			add_sibling($5, aux);
+																			add_child(aux, $7);
+																		}
+																	}
+																	else {
+																		add_sibling($3, aux);
+																		add_child(aux, $5);
+																		if (get_number_siblings($7) == 1 && $7 != NULL) {
+																			add_sibling(aux, $7);
+																		}
+																		else {
+																			struct node * aux2 = create_node("Block","");
+																			add_sibling(aux, aux2);
+																			add_child(aux2, $7);
+																		}
+																	}}
+		|	WHILE LPAR Expr RPAR Statement							{$$ = create_node("While","");
+																	add_child($$, $3);
+																	if (get_number_siblings($5) == 1 && $5 != NULL) {
+																		add_sibling($3, $5);
+																	}
+																	else {
+																		aux = create_node("Block","");
+																		add_sibling($3, aux);
+																		add_child(aux, $5);
+																	}}
+		|	RETURN ExprReturn SEMICOLON								{$$ = create_node("Return","");
+																	add_child($$, $2);}
+		|	Statement3 SEMICOLON									{$$ = $1;}
+		|	PRINT LPAR StatementPrint RPAR SEMICOLON				{$$ = create_node("Print","");
+																	add_child($$, $3);}
+		|	error SEMICOLON											{$$ = NULL; flag_erro = 1;}
 		;
 
 Statement2:	/* empty */												{$$ = NULL;}
