@@ -2,16 +2,141 @@
 	
 	#include <stdio.h>
 	#include <string.h>
-	#include "structures.h"
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <unistd.h>
 
 	#define YYDEBUG 1
 
 	struct node * root = NULL;
+	struct node * aux = NULL;
 	int yylex(void);
 	int yylex_destroy();
 	void yyerror(const char *s);
-	int errortag = 0, printflag = 0;
+	int errortag = 0;
 	int stmtcount = 0;
+	extern int debugMode;
+	int flag_erro = 0;
+	
+
+	#define MAX_CHILDREN 500
+
+	typedef struct node
+	{
+		struct node *children[MAX_CHILDREN]; // list of children of this node
+		int number_children;                 // to access the next empty child
+		struct node *bro;
+		struct node *parent;
+		char *type;
+		char *value;
+	} node;
+
+		// function to create a new node of type "type" and value "value"
+	struct node *create_node(char *type, char *value)
+	{
+
+		struct node *new = (struct node *)malloc(sizeof(struct node));
+
+		new->value = value;
+		new->type = type;
+		new->number_children = 0;
+		new->parent = NULL;
+		new->bro = NULL;
+
+		// printf("created new node %s(%s)\n\n", type, value);
+		return new;
+	}
+
+	// function to add a new child to the node parent, with type "type" and value "value"
+	struct node *add_child(struct node *parent, struct node *child)
+	{
+		struct node *aux;
+
+		if (child == NULL || parent == NULL)
+			return NULL;
+
+		parent->children[parent->number_children] = child;
+		parent->number_children++;
+		child->parent = parent;
+
+		aux = child->bro;
+
+		while (aux != NULL)
+		{ // iterates over child's siblings to add parent as a parent to them too
+			aux->parent = parent;
+			parent->children[parent->number_children] = aux;
+			parent->number_children++;
+			// printf("added child %s(%s) to parent %s(%s)\n\n", aux->type, aux->value, parent->type, parent->value);
+			aux = aux->bro;
+		}
+
+		// printf("added child %s(%s) of parent %s(%s)\n\n", child->type, child->value, parent->type, parent->value);
+
+		return parent;
+	}
+
+	struct node *add_sibling(struct node *s1, struct node *s2)
+	{
+		struct node *aux = s1;
+
+		if (aux != NULL)
+		{
+			while (aux->bro != NULL)
+			{
+				aux = aux->bro;
+			}
+			aux->bro = s2;
+		}
+		// if(s1!=NULL && s2!=NULL) printf("added %s(%s) and %s(%s) as siblings\n", s1->type, s1->value,s2->type, s2->value);
+		return s1;
+	}
+
+	// function to get the number of siblings of a given node
+	int get_number_siblings(struct node *node)
+	{
+		if (node->parent != NULL)
+		{
+			return node->parent->number_children;
+		}
+		return 0;
+	}
+
+	// function to print the tree in order
+	void print_node(struct node *root, int depth)
+	{
+		char *points = "";
+		int i;
+
+		if (root == NULL)
+			return;
+
+		// printf("node=%s children=%d\n", root->type, root->number_children);
+
+		// puts the appropriate number of points
+
+		for (i = 0; i < depth; i++)
+		{
+			printf("..");
+		}
+
+		if (strcmp(root->value, "") == 0)
+		{
+			printf("%s%s\n", points, root->type);
+		}
+		else
+		{
+			printf("%s%s(%s)\n", points, root->type, root->value);
+		}
+
+		for (int j = 0; j < root->number_children; j++)
+		{
+			print_node(root->children[j], depth + 1);
+		}
+
+		free(root);
+	}
+
 %}
 
 %union {
@@ -50,20 +175,35 @@
 %%
 
 Program:	CLASS ID LBRACE ProgramScript RBRACE					{
-	
+
+																	root = create_node("Program","");
+																	aux = create_node("Id",$2);
+																	add_child (root, aux);
+																	add_sibling (aux, $4);
+																	$$ = root;
+																	if (debugMode == 2) {
+																		print_node($$, 0);
+																	}
 																	}
 		;
 
-ProgramScript: 	/* empty */											{}
-			|	MethodDecl ProgramScript							{}
-			|	FieldDecl ProgramScript								{}
-			|	SEMICOLON ProgramScript								{}
+ProgramScript: 	/* empty */											{$$ = NULL;}
+			|	MethodDecl ProgramScript							{$$ = $1;
+																	add_sibling($$, $2);}
+			|	FieldDecl ProgramScript								{$$ = $1;
+																	add_sibling($$, $2);}
+			|	SEMICOLON ProgramScript								{$$ = $2;}
 			;
 
-MethodDecl:	PUBLIC STATIC MethodHeader MethodBody					{}
+MethodDecl:	PUBLIC STATIC MethodHeader MethodBody					{$$ = create_node( "MethodDecl","");
+																	add_child($$, $3);
+																	add_sibling($3, $4);}
 		;
 
-FieldDecl:	PUBLIC STATIC Type ID FieldDecl2 SEMICOLON				{}
+FieldDecl:	PUBLIC STATIC Type ID FieldDecl2 SEMICOLON				{$$ = create_node( "FieldDecl", "");
+																	add_child($$, $3);
+																	add_sibling($3, create_node("Id",$4));
+																	}
 		|	error SEMICOLON											{}
 		;
 
@@ -71,31 +211,31 @@ FieldDecl2:	/* empty */												{}
 		|	COMMA ID FieldDecl2										{}
 		;
 
-Type:	BOOL														{}
-	|	INT															{}
-	|	DOUBLE														{}
+Type:	BOOL														{$$ = create_node("Bool","");}
+	|	INT															{$$ = create_node("Int","");}
+	|	DOUBLE														{$$ = create_node("Double","");}
 	;
 
 MethodHeader:	Type ID LPAR MethodHeader2 RPAR						{}
 			|	VOID ID LPAR MethodHeader2 RPAR						{}
 			;
 
-MethodHeader2:	/* empty */											{}
-			|	FormalParams										{}
+MethodHeader2:	/* empty */											{$$ = NULL;}
+			|	FormalParams										{$$ = $1;}
 			;
 
 FormalParams:	Type ID FormalParams2								{}
 			|	STRING LSQ RSQ ID									{}
 			;
 
-FormalParams2:	/* empty */											{}
+FormalParams2:	/* empty */											{$$ = NULL;}
 			|	COMMA Type ID FormalParams2 						{}
 			;
 
 MethodBody:	LBRACE MethodBody2 RBRACE								{}
 		;
 
-MethodBody2: 	/* empty */											{}
+MethodBody2: 	/* empty */											{$$ = NULL;}
 			|	Statement MethodBody2								{}
 			|	VarDecl MethodBody2									{}
 			;
@@ -103,7 +243,7 @@ MethodBody2: 	/* empty */											{}
 VarDecl:	Type ID VarDecl2 SEMICOLON								{}
 		;
 
-VarDecl2:	/* empty */												{}
+VarDecl2:	/* empty */												{$$ = NULL;}
 		|	COMMA ID VarDecl2										{}
 		;
 
@@ -117,81 +257,142 @@ Statement:	LBRACE Statement2 RBRACE								{}
 		|	error SEMICOLON											{}
 		;
 
-Statement2:	/* empty */												{}
-		|	Statement Statement2									{}
+Statement2:	/* empty */												{$$ = NULL;}
+		|	Statement Statement2									{if ($1 != NULL) {
+																		$$ = $1;
+																		add_sibling($$, $2);
+																	}
+																	else {
+																		$$ = $2;
+																	}}
 		;
 
-ExprReturn:	/* empty */												{}
-		|	Expr													{}
+ExprReturn:	/* empty */												{$$ = NULL;}
+		|	Expr													{$$ = $1;}
 		;
 
-Statement3:	/* empty */												{}
-		|	MethodInvocation										{}
-		|	Assignment												{}
-		|	ParseArgs												{}
+Statement3:	/* empty */												{$$ = NULL;}
+		|	MethodInvocation										{$$ = $1;}
+		|	Assignment												{$$ = $1;}
+		|	ParseArgs												{$$ = $1;}
 		;
 
-StatementPrint:	Expr												{}
-			|	STRLIT												{}
+StatementPrint:	Expr												{$$ = $1;}
+			|	STRLIT												{$$ = create_node( "StrLit", $1);}
 			;
 
-MethodInvocation:	ID LPAR MethodInvocation2 RPAR					{}
-				|	ID LPAR error RPAR								{}
+MethodInvocation:	ID LPAR MethodInvocation2 RPAR					{$$ = create_node("Call","");
+																	aux = create_node("Id",$1);
+																	add_child($$, aux);
+																	add_sibling(aux, $3);}
+				|	ID LPAR error RPAR								{$$ = NULL;
+																	flag_erro = 1;}
 				;
 
-MethodInvocation2:	/* empty */										{}
-				|	Expr MethodInvocationExpr						{}
+MethodInvocation2:	/* empty */										{$$ = NULL;}
+				|	Expr MethodInvocationExpr						{$$ = $1;
+																	add_sibling($$, $2);}
 				;
 
-MethodInvocationExpr:	/* empty */									{}
-					|	COMMA Expr MethodInvocationExpr				{}
+MethodInvocationExpr:	/* empty */									{$$ = NULL;}
+					|	COMMA Expr MethodInvocationExpr				{if($2!=NULL) {
+																		$$=$2;
+																		add_sibling($$, $3);
+																	}
+																	else {
+																		$$=$2;
+																	}}
 					;
 
-Assignment:	ID ASSIGN Expr											{}
+Assignment:	ID ASSIGN Expr											{$$ = create_node("Assign","");
+																	aux = create_node("Id",$1);
+																	add_child($$, aux);
+																	add_sibling(aux, $3);}
 		;
 
-ParseArgs:	PARSEINT LPAR ID LSQ Expr RSQ RPAR						{}
-		|	PARSEINT LPAR error RPAR								{}
+ParseArgs:	PARSEINT LPAR ID LSQ Expr RSQ RPAR						{$$ = create_node("ParseArgs","");
+																	aux = create_node("Id",$3);
+																	add_child($$, aux);
+																	add_sibling(aux, $5);}
+		|	PARSEINT LPAR error RPAR								{$$ = NULL;
+																	flag_erro = 1;}
 		;
 
-Expr:	Assignment													{}
-	|	ExprOperations												{}
+Expr:	Assignment													{$$ = $1;}
+	|	ExprOperations												{$$ = $1;}
 	;
 
-ExprOperations:	ExprOperations PLUS ExprOperations					{}
-			|	ExprOperations MINUS ExprOperations					{}
-			|	ExprOperations STAR ExprOperations					{}
-			|	ExprOperations DIV ExprOperations					{}
-			|	ExprOperations MOD ExprOperations					{}
-			|	ExprOperations AND ExprOperations					{}
-			|	ExprOperations OR ExprOperations					{}
-			|	ExprOperations XOR ExprOperations					{}
-			|	ExprOperations LSHIFT ExprOperations				{}
-			|	ExprOperations RSHIFT ExprOperations				{}
-			|	ExprOperations EQ ExprOperations					{}
-			|	ExprOperations GE ExprOperations					{}
-			|	ExprOperations GT ExprOperations					{}
-			|	ExprOperations LE ExprOperations					{}
-			|	ExprOperations LT ExprOperations					{}
-			|	ExprOperations NE ExprOperations					{}
-			|	PLUS ExprOperations %prec NOT						{}
-			|	MINUS ExprOperations %prec NOT						{}
-			|	NOT ExprOperations									{}
-			|	LPAR Expr RPAR										{}
-			|	LPAR error RPAR										{}
-			|	Expr2												{}
-			|	ID													{}
-			|	ID DOTLENGTH										{}
-			|	ExprLit												{}
+ExprOperations:	ExprOperations PLUS ExprOperations					{$$ = create_node("Add", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations MINUS ExprOperations					{$$ = create_node("Sub", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations STAR ExprOperations					{$$ = create_node("Mul", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations DIV ExprOperations					{$$ = create_node("Div", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations MOD ExprOperations					{$$ = create_node("Mod", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations AND ExprOperations					{$$ = create_node("And", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations OR ExprOperations					{$$ = create_node("Or", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations XOR ExprOperations					{$$ = create_node("Xor", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations LSHIFT ExprOperations				{$$ = create_node("Lshift", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations RSHIFT ExprOperations				{$$ = create_node("Rshift", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations EQ ExprOperations					{$$ = create_node("Eq", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations GE ExprOperations					{$$ = create_node("Ge", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations GT ExprOperations					{$$ = create_node("Gt", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations LE ExprOperations					{$$ = create_node("Le", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations LT ExprOperations					{$$ = create_node("Lt", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	ExprOperations NE ExprOperations					{$$ = create_node("Ne", "");
+																	add_child($$, $1);
+																	add_sibling($1, $3);}
+			|	PLUS ExprOperations %prec NOT						{$$ = create_node("Plus", "");
+																	add_child($$, $2);}
+			|	MINUS ExprOperations %prec NOT						{$$ = create_node("Minus", "");
+																	add_child($$, $2);}
+			|	NOT ExprOperations									{$$ = create_node("Not", "");
+																	add_child($$, $2);}
+			|	LPAR Expr RPAR										{$$ = $2;}
+			|	LPAR error RPAR										{$$ = NULL;
+																	flag_erro = 1;}
+			|	Expr2												{$$ = $1;}
+			|	ID													{$$ = create_node("Id", $1);}
+			|	ID DOTLENGTH										{$$ = create_node("Length", "");
+																	add_child($$, create_node("Id", $1));}
+			|	ExprLit												{$$ = $1;}
 	;
 
-Expr2:	MethodInvocation											{}
-	|	ParseArgs													{}
+Expr2:	MethodInvocation											{$$ = $1;}
+	|	ParseArgs													{$$ = $1;}
 	;
 
-ExprLit:	INTLIT													{}
-		|	REALLIT													{}
-		|	BOOLLIT													{}
+ExprLit:	INTLIT													{$$ = create_node("DecLit", $1);}
+		|	REALLIT													{$$ = create_node("RealLit", $1);}
+		|	BOOLLIT													{$$ = create_node("BoolLit", $1);}
 		;
 
 %%

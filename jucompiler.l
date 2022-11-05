@@ -14,6 +14,7 @@
     int auxLine = 1;
     int auxCol = 1;
     int strlit_error = 0;
+	extern int flag_erro;
     int debugMode;
     char * strlit;
 
