@@ -34,7 +34,7 @@ Program
 ..........Id(tiago_to)
 ..........Id(manolos_simpaticos)
 ........Print
-..........StrLit(")
+..........StrLit("Impossivel sair daqui eheh")
 ......While
 ........Id(a)
 ........While
@@ -48,7 +48,7 @@ Program
 ................While
 ..................Id(bem)
 ..................Print
-....................StrLit(")
+....................StrLit("RUMO AOS 800!!")
 ......If
 ........Id(tiago_to)
 ........Block

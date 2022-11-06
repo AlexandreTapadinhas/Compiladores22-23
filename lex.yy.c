@@ -1341,7 +1341,7 @@ YY_RULE_SETUP
 case 58:
 YY_RULE_SETUP
 #line 108 "jucompiler.l"
-{ BEGIN 0;if(!debugMode && !strlit_error)printf("STRLIT(%s)\n",strlit);col+=yyleng; if(debugMode != 1 && !strlit_error){yylval.strlit = strdup(yytext); return STRLIT;}}
+{if(!debugMode && !strlit_error)printf("STRLIT(%s)\n",strlit);col+=yyleng; BEGIN 0; if(debugMode != 1 && !strlit_error){yylval.strlit = strdup(strlit); yytext=strlit;return STRLIT;}}
 	YY_BREAK
 case YY_STATE_EOF(STRLIT_ST):
 #line 109 "jucompiler.l"
@@ -2416,5 +2416,5 @@ int yywrap() {
 }
 
 void yyerror (const char* s) { 
-	printf ("Line %d, col %d: %s: %s\n", line, col-yyleng, s, yytext);
+	printf ("Line %d, col %d: %s: %s\n", line, (int)(col-strlen(yytext)), s, yytext);
 }

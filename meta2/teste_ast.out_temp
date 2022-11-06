@@ -67,7 +67,7 @@ Program
 ............Id(preco)
 ............DecLit(0)
 ........Print
-..........StrLit(")
+..........StrLit("we out here")
 ........Block
 ..........Assign
 ............Id(preco)
@@ -79,7 +79,7 @@ Program
 ..............Id(preco)
 ..............DecLit(2)
 ..........Print
-............StrLit(")
+............StrLit("dat boi dead")
 ......Return
 ........Id(vivo)
 ..MethodDecl

@@ -31,9 +31,9 @@ Program
 ..............DecLit(0)
 ............DecLit(1)
 ..........Print
-............StrLit(")
+............StrLit("The first argument is one")
 ..........Print
-............StrLit(")
+............StrLit("The value is something!")
 ........Block
 ......If
 ........Id(b)
@@ -43,7 +43,7 @@ Program
 ............DecLit(10)
 ..........Block
 ..........Print
-............StrLit(")
+............StrLit("Within the second else")
 ........Block
 ......VarDecl
 ........Int
@@ -101,11 +101,11 @@ Program
 ..........Id(b)
 ....MethodBody
 ......Print
-........StrLit(")
+........StrLit("Arguments: a -> ")
 ......Print
 ........Id(a)
 ......Print
-........StrLit(")
+........StrLit("b is: ")
 ......Print
 ........Id(b)
 ..MethodDecl

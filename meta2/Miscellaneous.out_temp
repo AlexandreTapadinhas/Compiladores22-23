@@ -17,17 +17,17 @@ Program
 ..........Id(juntos_nos_projetos_todos)
 ........Block
 ..........Print
-............StrLit(")
+............StrLit("20 no projeto de SD")
 ..........Print
-............StrLit(")
+............StrLit("20 no projeto de PPP")
 ..........Print
-............StrLit(")
+............StrLit("20 no projeto de POO")
 ..........Print
-............StrLit(")
+............StrLit("20 no projeto de TI")
 ..........Print
-............StrLit(")
+............StrLit("20 no projeto de MULTIMEDIA")
 ..........Print
-............StrLit(")
+............StrLit("20 no projeto de IRC")
 ..........If
 ............Eq
 ..............Id(cadeira)
@@ -51,7 +51,7 @@ Program
 ............................If
 ..............................DecLit(0)
 ..............................Print
-................................StrLit(")
+................................StrLit("Plagio mas depois 15")
 ..............................Block
 ............................Block
 ..........................Block
