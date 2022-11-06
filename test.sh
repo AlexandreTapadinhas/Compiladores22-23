@@ -23,7 +23,7 @@ for inp in meta2/*.java; do
     out=${inp%.java}.out
     tmp=${inp%.java}.out_temp
     if [[ "$inp" == *_e1.java ]]; then
-        $exe -e1 < "$inp" > "$tmp"
+        $exe -e2 < "$inp" > "$tmp"
     else
         $exe -t < "$inp" > "$tmp"
     fi

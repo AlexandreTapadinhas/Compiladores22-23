@@ -35,6 +35,8 @@
 
 		struct node *new = (struct node *)malloc(sizeof(struct node));
 
+		//printf("%s\n",type);
+
 		new->value = value;
 		new->type = type;
 		new->number_children = 0;
@@ -42,7 +44,7 @@
 		new->children = NULL;
 		new->bro = NULL;
 
-		// printf("created new node %s(%s)\n\n", type, value);
+		//printf("created new node %s(%s)\n\n", type, value);
 		return new;
 	}
 
@@ -65,7 +67,7 @@
 	{
 		struct node *aux = s1;
 
-		if (aux != NULL)
+		if (aux != NULL && s2 != NULL)
 		{
 			while (aux->bro != NULL)
 			{
@@ -85,11 +87,12 @@
 	// function to get the number of siblings of a given node
 	int get_number_siblings(struct node *node)
 	{
-		if (node->parent != NULL)
-		{
-			return node->parent->number_children;
+		int count = 0;
+		while (node != NULL) {
+			node = node->bro;
+			count++;
 		}
-		return 0;
+		return count;
 	}
 
 	// function to print the tree in order
@@ -290,7 +293,7 @@ VarDecl2:	/* empty */												{$$ = NULL;}
 																	add_sibling($$, $3);}
 		;
 
-Statement:	LBRACE Statement2 RBRACE								{if (get_number_siblings($2) > 1) {
+Statement:	LBRACE Statement2 RBRACE								{if ($2 != NULL && get_number_siblings($2) > 1) {
 																		aux = create_node("Block","");
 																		$$ = aux;
 																		add_child(aux, $2);
@@ -301,7 +304,7 @@ Statement:	LBRACE Statement2 RBRACE								{if (get_number_siblings($2) > 1) {
 		|	IF LPAR Expr RPAR Statement %prec ELSE					{$$ = create_node("If","");
 																	add_child($$,$3);
 																	aux = create_node("Block","");
-																	if (get_number_siblings($5) == 1 && $5 != NULL) {
+																	if ($5 != NULL && get_number_siblings($5) == 1 ) {
 																		add_sibling($3, $5);
 																		add_sibling($5, aux);
 																	}
@@ -313,9 +316,9 @@ Statement:	LBRACE Statement2 RBRACE								{if (get_number_siblings($2) > 1) {
 		|	IF LPAR Expr RPAR Statement ELSE Statement				{$$ = create_node("If","");
 																	add_child($$,$3);
 																	aux = create_node("Block","");
-																	if (get_number_siblings($5) == 1 && $5 != NULL) {
+																	if ($5 != NULL && get_number_siblings($5) == 1 ) {
 																		add_sibling($3, $5);
-																		if (get_number_siblings($7) == 1 && $7 != NULL) {
+																		if ($7 != NULL && get_number_siblings($7) == 1) {
 																			add_sibling($5, $7);
 																		}
 																		else {
@@ -326,7 +329,7 @@ Statement:	LBRACE Statement2 RBRACE								{if (get_number_siblings($2) > 1) {
 																	else {
 																		add_sibling($3, aux);
 																		add_child(aux, $5);
-																		if (get_number_siblings($7) == 1 && $7 != NULL) {
+																		if ($7 != NULL && get_number_siblings($7) == 1 ) {
 																			add_sibling(aux, $7);
 																		}
 																		else {
@@ -337,7 +340,7 @@ Statement:	LBRACE Statement2 RBRACE								{if (get_number_siblings($2) > 1) {
 																	}}
 		|	WHILE LPAR Expr RPAR Statement							{$$ = create_node("While","");
 																	add_child($$, $3);
-																	if (get_number_siblings($5) == 1 && $5 != NULL) {
+																	if ($5 != NULL && get_number_siblings($5) == 1)  {
 																		add_sibling($3, $5);
 																	}
 																	else {
@@ -380,7 +383,7 @@ StatementPrint:	Expr												{$$ = $1;}
 MethodInvocation:	ID LPAR MethodInvocation2 RPAR					{$$ = create_node("Call","");
 																	aux = create_node("Id",$1);
 																	add_child($$, aux);
-																	add_sibling(aux, $3);}
+																	if($3 != NULL)add_sibling(aux, $3);}
 				|	ID LPAR error RPAR								{$$ = NULL;
 																	flag_erro = 1;}
 				;

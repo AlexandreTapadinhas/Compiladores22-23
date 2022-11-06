@@ -13,9 +13,8 @@ Program
 ........Eq
 ..........Id(n)
 ..........DecLit(0)
-........Block
-..........Return
-............DecLit(1)
+........Return
+..........DecLit(1)
 ........Block
 ......Return
 ........Mul
