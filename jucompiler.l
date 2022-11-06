@@ -149,5 +149,5 @@ int yywrap() {
 }
 
 void yyerror (const char* s) { 
-	printf ("%s: %s\n", s, yytext);
+	printf ("Line %d, col %d: %s: %s\n", line, col-yyleng, s, yytext);
 }
