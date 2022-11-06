@@ -14,17 +14,14 @@
 	int yylex(void);
 	int yylex_destroy();
 	void yyerror(const char *s);
-	int errortag = 0;
-	int stmtcount = 0;
 	extern int debugMode;
 	int flag_erro = 0;
 	
 
-	#define MAX_CHILDREN 500
 
 	typedef struct node
 	{
-		struct node *children[MAX_CHILDREN]; // list of children of this node
+		struct node *children; // list of children of this node
 		int number_children;                 // to access the next empty child
 		struct node *bro;
 		struct node *parent;
@@ -42,6 +39,7 @@
 		new->type = type;
 		new->number_children = 0;
 		new->parent = NULL;
+		new->children = NULL;
 		new->bro = NULL;
 
 		// printf("created new node %s(%s)\n\n", type, value);
@@ -56,22 +54,9 @@
 		if (child == NULL || parent == NULL)
 			return NULL;
 
-		parent->children[parent->number_children] = child;
+		parent->children= child;
 		parent->number_children++;
 		child->parent = parent;
-
-		// aux = child->bro;
-
-		// while (aux != NULL)
-		// { // iterates over child's siblings to add parent as a parent to them too
-		// 	aux->parent = parent;
-		// 	parent->children[parent->number_children] = aux;
-		// 	parent->number_children++;
-		// 	// printf("added child %s(%s) to parent %s(%s)\n\n", aux->type, aux->value, parent->type, parent->value);
-		// 	aux = aux->bro;
-		// }
-
-		// printf("added child %s(%s) of parent %s(%s)\n\n", child->type, child->value, parent->type, parent->value);
 
 		return parent;
 	}
@@ -88,12 +73,11 @@
 			}
 			aux->bro = s2;
 			if (s1->parent != NULL) {
-			aux = s1->parent;
-			s2->parent = aux;
-			aux->children[aux->number_children] = s2;
+			s2->parent = s1->parent;
 			s2->parent->number_children++;
 		}
 		}
+		
 		//if(s1!=NULL && s2!=NULL) printf("added %s(%s) and %s(%s) as siblings\n", s1->type, s1->value,s2->type, s2->value);
 		return s1;
 	}
@@ -110,38 +94,31 @@
 
 	// function to print the tree in order
 	void print_node(struct node *root, int depth)
-	{
-		char *points = "";
-		int i;
-
-		if (root == NULL)
-			return;
-
-		//printf("node=%s children=%d\n", root->type, root->number_children);
-
-		// puts the appropriate number of points
-
-		for (i = 0; i < depth; i++)
-		{
-			printf("..");
+	{if (root == NULL) {
+			return ;
+		}
+		int i = 0;
+		struct node *  aux;
+		
+			while (i < depth) {
+				printf("..");
+				i++;
+			}
+			if (strcmp(root->value,"") != 0) {
+				printf("%s(%s)\n", root->type, root->value);
+			}
+			else {
+				printf("%s\n", root->type);
+			}
+		
+		aux = root->children;
+		while (aux != NULL) {
+			struct node * aux_free = aux;
+			print_node(aux, depth+1);
+			aux = aux->bro;
 		}
 
-		if (strcmp(root->value, "") == 0)
-		{
-			printf("%s%s\n", points, root->type);
-		}
-		else
-		{
-			printf("%s%s(%s)\n", points, root->type, root->value);
-		}
-
-		for (int j = 0; j < root->number_children; j++)
-		{
-			print_node(root->children[j], depth + 1);
-		}
-
-		free(root);
-	}
+	}		
 
 %}
 
@@ -187,7 +164,7 @@ Program:	CLASS ID LBRACE ProgramScript RBRACE					{
 																	add_child (root, aux);
 																	add_sibling (aux, $4);
 																	$$ = root;
-																	if (debugMode == 2) {
+																	if (debugMode == 2 && flag_erro == 0) {
 																		print_node($$, 0);
 																	}
 																	}

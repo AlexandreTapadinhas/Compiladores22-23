@@ -83,17 +83,14 @@
 	int yylex(void);
 	int yylex_destroy();
 	void yyerror(const char *s);
-	int errortag = 0;
-	int stmtcount = 0;
 	extern int debugMode;
 	int flag_erro = 0;
 	
 
-	#define MAX_CHILDREN 500
 
 	typedef struct node
 	{
-		struct node *children[MAX_CHILDREN]; // list of children of this node
+		struct node *children; // list of children of this node
 		int number_children;                 // to access the next empty child
 		struct node *bro;
 		struct node *parent;
@@ -111,6 +108,7 @@
 		new->type = type;
 		new->number_children = 0;
 		new->parent = NULL;
+		new->children = NULL;
 		new->bro = NULL;
 
 		// printf("created new node %s(%s)\n\n", type, value);
@@ -125,22 +123,9 @@
 		if (child == NULL || parent == NULL)
 			return NULL;
 
-		parent->children[parent->number_children] = child;
+		parent->children= child;
 		parent->number_children++;
 		child->parent = parent;
-
-		// aux = child->bro;
-
-		// while (aux != NULL)
-		// { // iterates over child's siblings to add parent as a parent to them too
-		// 	aux->parent = parent;
-		// 	parent->children[parent->number_children] = aux;
-		// 	parent->number_children++;
-		// 	// printf("added child %s(%s) to parent %s(%s)\n\n", aux->type, aux->value, parent->type, parent->value);
-		// 	aux = aux->bro;
-		// }
-
-		// printf("added child %s(%s) of parent %s(%s)\n\n", child->type, child->value, parent->type, parent->value);
 
 		return parent;
 	}
@@ -157,12 +142,11 @@
 			}
 			aux->bro = s2;
 			if (s1->parent != NULL) {
-			aux = s1->parent;
-			s2->parent = aux;
-			aux->children[aux->number_children] = s2;
+			s2->parent = s1->parent;
 			s2->parent->number_children++;
 		}
 		}
+		
 		//if(s1!=NULL && s2!=NULL) printf("added %s(%s) and %s(%s) as siblings\n", s1->type, s1->value,s2->type, s2->value);
 		return s1;
 	}
@@ -179,41 +163,34 @@
 
 	// function to print the tree in order
 	void print_node(struct node *root, int depth)
-	{
-		char *points = "";
-		int i;
-
-		if (root == NULL)
-			return;
-
-		//printf("node=%s children=%d\n", root->type, root->number_children);
-
-		// puts the appropriate number of points
-
-		for (i = 0; i < depth; i++)
-		{
-			printf("..");
+	{if (root == NULL) {
+			return ;
+		}
+		int i = 0;
+		struct node *  aux;
+		
+			while (i < depth) {
+				printf("..");
+				i++;
+			}
+			if (strcmp(root->value,"") != 0) {
+				printf("%s(%s)\n", root->type, root->value);
+			}
+			else {
+				printf("%s\n", root->type);
+			}
+		
+		aux = root->children;
+		while (aux != NULL) {
+			struct node * aux_free = aux;
+			print_node(aux, depth+1);
+			aux = aux->bro;
 		}
 
-		if (strcmp(root->value, "") == 0)
-		{
-			printf("%s%s\n", points, root->type);
-		}
-		else
-		{
-			printf("%s%s(%s)\n", points, root->type, root->value);
-		}
-
-		for (int j = 0; j < root->number_children; j++)
-		{
-			print_node(root->children[j], depth + 1);
-		}
-
-		free(root);
-	}
+	}		
 
 
-#line 217 "y.tab.c"
+#line 194 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -365,7 +342,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 148 "jucompiler.y"
+#line 125 "jucompiler.y"
 
 	char * id;
 	char * strlit;
@@ -374,7 +351,7 @@ union YYSTYPE
 	char * reallit;
 	struct node * node;
 
-#line 378 "y.tab.c"
+#line 355 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -754,15 +731,15 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   183,   183,   196,   197,   199,   201,   204,   210,   226,
-     229,   230,   234,   235,   236,   239,   245,   254,   255,   259,
-     264,   270,   271,   278,   282,   283,   290,   294,   311,   312,
-     316,   324,   336,   361,   371,   373,   374,   376,   379,   380,
-     389,   390,   393,   394,   395,   396,   399,   400,   403,   407,
-     411,   412,   416,   417,   426,   432,   436,   440,   441,   444,
-     447,   450,   453,   456,   459,   462,   465,   468,   471,   474,
-     477,   480,   483,   486,   489,   492,   494,   496,   498,   499,
-     501,   502,   503,   505,   508,   509,   512,   513,   514
+       0,   160,   160,   173,   174,   176,   178,   181,   187,   203,
+     206,   207,   211,   212,   213,   216,   222,   231,   232,   236,
+     241,   247,   248,   255,   259,   260,   267,   271,   288,   289,
+     293,   301,   313,   338,   348,   350,   351,   353,   356,   357,
+     366,   367,   370,   371,   372,   373,   376,   377,   380,   384,
+     388,   389,   393,   394,   403,   409,   413,   417,   418,   421,
+     424,   427,   430,   433,   436,   439,   442,   445,   448,   451,
+     454,   457,   460,   463,   466,   469,   471,   473,   475,   476,
+     478,   479,   480,   482,   485,   486,   489,   490,   491
 };
 #endif
 
@@ -1714,7 +1691,7 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 183 "jucompiler.y"
+#line 160 "jucompiler.y"
                                                                                         {
 
 																	root = create_node("Program","");
@@ -1722,50 +1699,50 @@ yyreduce:
 																	add_child (root, aux);
 																	add_sibling (aux, (yyvsp[-1].node));
 																	(yyval.node) = root;
-																	if (debugMode == 2) {
+																	if (debugMode == 2 && flag_erro == 0) {
 																		print_node((yyval.node), 0);
 																	}
 																	}
-#line 1730 "y.tab.c"
+#line 1707 "y.tab.c"
     break;
 
   case 3:
-#line 196 "jucompiler.y"
+#line 173 "jucompiler.y"
                                                                                                                 {(yyval.node) = NULL;}
-#line 1736 "y.tab.c"
+#line 1713 "y.tab.c"
     break;
 
   case 4:
-#line 197 "jucompiler.y"
+#line 174 "jucompiler.y"
                                                                                                                 {(yyval.node) = (yyvsp[-1].node);
 																	add_sibling((yyval.node), (yyvsp[0].node));}
-#line 1743 "y.tab.c"
+#line 1720 "y.tab.c"
     break;
 
   case 5:
-#line 199 "jucompiler.y"
+#line 176 "jucompiler.y"
                                                                                                                 {(yyval.node) = (yyvsp[-1].node);
 																	add_sibling((yyval.node), (yyvsp[0].node));}
-#line 1750 "y.tab.c"
+#line 1727 "y.tab.c"
     break;
 
   case 6:
-#line 201 "jucompiler.y"
+#line 178 "jucompiler.y"
                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 1756 "y.tab.c"
+#line 1733 "y.tab.c"
     break;
 
   case 7:
-#line 204 "jucompiler.y"
+#line 181 "jucompiler.y"
                                                                                         {(yyval.node) = create_node( "MethodDecl","");
 																	add_child((yyval.node), (yyvsp[-1].node));
 																	add_sibling((yyvsp[-1].node), (yyvsp[0].node));
 																	}
-#line 1765 "y.tab.c"
+#line 1742 "y.tab.c"
     break;
 
   case 8:
-#line 210 "jucompiler.y"
+#line 187 "jucompiler.y"
                                                                                         {(yyval.node) = create_node( "FieldDecl", "");
 																	add_child((yyval.node), (yyvsp[-3].node));
 																	add_sibling((yyvsp[-3].node), create_node("Id",(yyvsp[-2].id)));
@@ -1782,59 +1759,59 @@ yyreduce:
 																		free(aux);
 																	}
 																	}
-#line 1786 "y.tab.c"
+#line 1763 "y.tab.c"
     break;
 
   case 9:
-#line 226 "jucompiler.y"
+#line 203 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL; flag_erro = 1;}
-#line 1792 "y.tab.c"
+#line 1769 "y.tab.c"
     break;
 
   case 10:
-#line 229 "jucompiler.y"
+#line 206 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL;}
-#line 1798 "y.tab.c"
+#line 1775 "y.tab.c"
     break;
 
   case 11:
-#line 230 "jucompiler.y"
+#line 207 "jucompiler.y"
                                                                                                                         {(yyval.node) = create_node("Id", (yyvsp[-1].id));
 																	add_sibling((yyval.node), (yyvsp[0].node));}
-#line 1805 "y.tab.c"
+#line 1782 "y.tab.c"
     break;
 
   case 12:
-#line 234 "jucompiler.y"
+#line 211 "jucompiler.y"
                                                                                                                         {(yyval.node) = create_node("Bool","");}
-#line 1811 "y.tab.c"
+#line 1788 "y.tab.c"
     break;
 
   case 13:
-#line 235 "jucompiler.y"
+#line 212 "jucompiler.y"
                                                                                                                                         {(yyval.node) = create_node("Int","");}
-#line 1817 "y.tab.c"
+#line 1794 "y.tab.c"
     break;
 
   case 14:
-#line 236 "jucompiler.y"
+#line 213 "jucompiler.y"
                                                                                                                                 {(yyval.node) = create_node("Double","");}
-#line 1823 "y.tab.c"
+#line 1800 "y.tab.c"
     break;
 
   case 15:
-#line 239 "jucompiler.y"
+#line 216 "jucompiler.y"
                                                                                         {(yyval.node) = create_node("MethodHeader", "");
 																	add_child((yyval.node),(yyvsp[-4].node));
 																	add_sibling((yyvsp[-4].node), create_node("Id", (yyvsp[-3].id)));
 																	aux = create_node("MethodParams", "");
 																	add_sibling((yyvsp[-4].node), aux);
 																	add_child(aux, (yyvsp[-1].node));}
-#line 1834 "y.tab.c"
+#line 1811 "y.tab.c"
     break;
 
   case 16:
-#line 245 "jucompiler.y"
+#line 222 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("MethodHeader", "");
 																	aux = create_node("Void", "");
 																	add_child((yyval.node), aux);
@@ -1842,71 +1819,71 @@ yyreduce:
 																	struct node * aux2 = create_node("MethodParams", "");
 																	add_sibling(aux, aux2);
 																	add_child(aux2, (yyvsp[-1].node));}
-#line 1846 "y.tab.c"
+#line 1823 "y.tab.c"
     break;
 
   case 17:
-#line 254 "jucompiler.y"
+#line 231 "jucompiler.y"
                                                                                                                 {(yyval.node) = NULL;}
-#line 1852 "y.tab.c"
+#line 1829 "y.tab.c"
     break;
 
   case 18:
-#line 255 "jucompiler.y"
+#line 232 "jucompiler.y"
                                                                                                                         {(yyval.node) = (yyvsp[0].node);}
-#line 1858 "y.tab.c"
+#line 1835 "y.tab.c"
     break;
 
   case 19:
-#line 259 "jucompiler.y"
+#line 236 "jucompiler.y"
                                                                                                 {(yyval.node) = create_node("ParamDecl","");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	aux = create_node("Id",(yyvsp[-1].id));
 																	add_sibling((yyvsp[-2].node), aux);
 																	add_sibling((yyval.node), (yyvsp[0].node));}
-#line 1868 "y.tab.c"
+#line 1845 "y.tab.c"
     break;
 
   case 20:
-#line 264 "jucompiler.y"
+#line 241 "jucompiler.y"
                                                                                                                         {(yyval.node) = create_node("ParamDecl","");
 																	aux = create_node("StringArray","");
 																	add_child((yyval.node), aux);
 																	add_sibling(aux, create_node("Id",(yyvsp[0].id)));}
-#line 1877 "y.tab.c"
+#line 1854 "y.tab.c"
     break;
 
   case 21:
-#line 270 "jucompiler.y"
+#line 247 "jucompiler.y"
                                                                                                                 {(yyval.node) = NULL;}
-#line 1883 "y.tab.c"
+#line 1860 "y.tab.c"
     break;
 
   case 22:
-#line 271 "jucompiler.y"
+#line 248 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("ParamDecl","");
 																	aux = create_node("Id",(yyvsp[-1].id));
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), aux);
 																	add_sibling((yyval.node), (yyvsp[0].node));}
-#line 1893 "y.tab.c"
+#line 1870 "y.tab.c"
     break;
 
   case 23:
-#line 278 "jucompiler.y"
+#line 255 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("MethodBody","");
 																	add_child((yyval.node), (yyvsp[-1].node));}
-#line 1900 "y.tab.c"
+#line 1877 "y.tab.c"
     break;
 
   case 24:
-#line 282 "jucompiler.y"
+#line 259 "jucompiler.y"
                                                                                                                 {(yyval.node) = NULL;}
-#line 1906 "y.tab.c"
+#line 1883 "y.tab.c"
     break;
 
   case 25:
-#line 283 "jucompiler.y"
+#line 260 "jucompiler.y"
                                                                                                                 {if ((yyvsp[-1].node) != NULL){
 																		(yyval.node) = (yyvsp[-1].node);
 																		add_sibling((yyval.node), (yyvsp[0].node));
@@ -1914,18 +1891,18 @@ yyreduce:
 																	else {
 																		(yyval.node) = (yyvsp[0].node);
 																	}}
-#line 1918 "y.tab.c"
+#line 1895 "y.tab.c"
     break;
 
   case 26:
-#line 290 "jucompiler.y"
+#line 267 "jucompiler.y"
                                                                                                                         {(yyval.node) = (yyvsp[-1].node);
 																	add_sibling((yyval.node), (yyvsp[0].node));}
-#line 1925 "y.tab.c"
+#line 1902 "y.tab.c"
     break;
 
   case 27:
-#line 294 "jucompiler.y"
+#line 271 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("VarDecl", "");
 																	add_child((yyval.node), (yyvsp[-3].node));
 																	add_sibling((yyvsp[-3].node), create_node("Id", (yyvsp[-2].id)));
@@ -1941,24 +1918,24 @@ yyreduce:
 																		}
 																		free(aux);
 																	}}
-#line 1945 "y.tab.c"
+#line 1922 "y.tab.c"
     break;
 
   case 28:
-#line 311 "jucompiler.y"
+#line 288 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL;}
-#line 1951 "y.tab.c"
+#line 1928 "y.tab.c"
     break;
 
   case 29:
-#line 312 "jucompiler.y"
+#line 289 "jucompiler.y"
                                                                                                                         {(yyval.node) = create_node("Id",(yyvsp[-1].id));
 																	add_sibling((yyval.node), (yyvsp[0].node));}
-#line 1958 "y.tab.c"
+#line 1935 "y.tab.c"
     break;
 
   case 30:
-#line 316 "jucompiler.y"
+#line 293 "jucompiler.y"
                                                                                                         {if (get_number_siblings((yyvsp[-1].node)) > 1) {
 																		aux = create_node("Block","");
 																		(yyval.node) = aux;
@@ -1967,11 +1944,11 @@ yyreduce:
 																	else {
 																		(yyval.node) = (yyvsp[-1].node);
 																	}}
-#line 1971 "y.tab.c"
+#line 1948 "y.tab.c"
     break;
 
   case 31:
-#line 324 "jucompiler.y"
+#line 301 "jucompiler.y"
                                                                                                 {(yyval.node) = create_node("If","");
 																	add_child((yyval.node),(yyvsp[-2].node));
 																	aux = create_node("Block","");
@@ -1984,11 +1961,11 @@ yyreduce:
 																		add_child(aux, (yyvsp[0].node));
 																		add_sibling(aux, create_node("Block",""));
 																	}}
-#line 1988 "y.tab.c"
+#line 1965 "y.tab.c"
     break;
 
   case 32:
-#line 336 "jucompiler.y"
+#line 313 "jucompiler.y"
                                                                                                 {(yyval.node) = create_node("If","");
 																	add_child((yyval.node),(yyvsp[-4].node));
 																	aux = create_node("Block","");
@@ -2014,11 +1991,11 @@ yyreduce:
 																			add_child(aux2, (yyvsp[0].node));
 																		}
 																	}}
-#line 2018 "y.tab.c"
+#line 1995 "y.tab.c"
     break;
 
   case 33:
-#line 361 "jucompiler.y"
+#line 338 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("While","");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	if (get_number_siblings((yyvsp[0].node)) == 1 && (yyvsp[0].node) != NULL) {
@@ -2029,43 +2006,43 @@ yyreduce:
 																		add_sibling((yyvsp[-2].node), aux);
 																		add_child(aux, (yyvsp[0].node));
 																	}}
-#line 2033 "y.tab.c"
+#line 2010 "y.tab.c"
     break;
 
   case 34:
-#line 371 "jucompiler.y"
+#line 348 "jucompiler.y"
                                                                                                                 {(yyval.node) = create_node("Return","");
 																	add_child((yyval.node), (yyvsp[-1].node));}
-#line 2040 "y.tab.c"
+#line 2017 "y.tab.c"
     break;
 
   case 35:
-#line 373 "jucompiler.y"
+#line 350 "jucompiler.y"
                                                                                                                 {(yyval.node) = (yyvsp[-1].node);}
-#line 2046 "y.tab.c"
+#line 2023 "y.tab.c"
     break;
 
   case 36:
-#line 374 "jucompiler.y"
+#line 351 "jucompiler.y"
                                                                                                 {(yyval.node) = create_node("Print","");
 																	add_child((yyval.node), (yyvsp[-2].node));}
-#line 2053 "y.tab.c"
+#line 2030 "y.tab.c"
     break;
 
   case 37:
-#line 376 "jucompiler.y"
+#line 353 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL; flag_erro = 1;}
-#line 2059 "y.tab.c"
+#line 2036 "y.tab.c"
     break;
 
   case 38:
-#line 379 "jucompiler.y"
+#line 356 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL;}
-#line 2065 "y.tab.c"
+#line 2042 "y.tab.c"
     break;
 
   case 39:
-#line 380 "jucompiler.y"
+#line 357 "jucompiler.y"
                                                                                                                 {if ((yyvsp[-1].node) != NULL) {
 																		(yyval.node) = (yyvsp[-1].node);
 																		add_sibling((yyval.node), (yyvsp[0].node));
@@ -2073,94 +2050,94 @@ yyreduce:
 																	else {
 																		(yyval.node) = (yyvsp[0].node);
 																	}}
-#line 2077 "y.tab.c"
+#line 2054 "y.tab.c"
     break;
 
   case 40:
-#line 389 "jucompiler.y"
+#line 366 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL;}
-#line 2083 "y.tab.c"
+#line 2060 "y.tab.c"
     break;
 
   case 41:
-#line 390 "jucompiler.y"
+#line 367 "jucompiler.y"
                                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 2089 "y.tab.c"
+#line 2066 "y.tab.c"
     break;
 
   case 42:
-#line 393 "jucompiler.y"
+#line 370 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL;}
-#line 2095 "y.tab.c"
+#line 2072 "y.tab.c"
     break;
 
   case 43:
-#line 394 "jucompiler.y"
+#line 371 "jucompiler.y"
                                                                                                                         {(yyval.node) = (yyvsp[0].node);}
-#line 2101 "y.tab.c"
+#line 2078 "y.tab.c"
     break;
 
   case 44:
-#line 395 "jucompiler.y"
+#line 372 "jucompiler.y"
                                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 2107 "y.tab.c"
+#line 2084 "y.tab.c"
     break;
 
   case 45:
-#line 396 "jucompiler.y"
+#line 373 "jucompiler.y"
                                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 2113 "y.tab.c"
+#line 2090 "y.tab.c"
     break;
 
   case 46:
-#line 399 "jucompiler.y"
+#line 376 "jucompiler.y"
                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 2119 "y.tab.c"
+#line 2096 "y.tab.c"
     break;
 
   case 47:
-#line 400 "jucompiler.y"
+#line 377 "jucompiler.y"
                                                                                                                                 {(yyval.node) = create_node( "StrLit", (yyvsp[0].strlit));}
-#line 2125 "y.tab.c"
+#line 2102 "y.tab.c"
     break;
 
   case 48:
-#line 403 "jucompiler.y"
+#line 380 "jucompiler.y"
                                                                                         {(yyval.node) = create_node("Call","");
 																	aux = create_node("Id",(yyvsp[-3].id));
 																	add_child((yyval.node), aux);
 																	add_sibling(aux, (yyvsp[-1].node));}
-#line 2134 "y.tab.c"
+#line 2111 "y.tab.c"
     break;
 
   case 49:
-#line 407 "jucompiler.y"
+#line 384 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL;
 																	flag_erro = 1;}
-#line 2141 "y.tab.c"
+#line 2118 "y.tab.c"
     break;
 
   case 50:
-#line 411 "jucompiler.y"
+#line 388 "jucompiler.y"
                                                                                                                 {(yyval.node) = NULL;}
-#line 2147 "y.tab.c"
+#line 2124 "y.tab.c"
     break;
 
   case 51:
-#line 412 "jucompiler.y"
+#line 389 "jucompiler.y"
                                                                                                                 {(yyval.node) = (yyvsp[-1].node);
 																	add_sibling((yyval.node), (yyvsp[0].node));}
-#line 2154 "y.tab.c"
+#line 2131 "y.tab.c"
     break;
 
   case 52:
-#line 416 "jucompiler.y"
+#line 393 "jucompiler.y"
                                                                                                         {(yyval.node) = NULL;}
-#line 2160 "y.tab.c"
+#line 2137 "y.tab.c"
     break;
 
   case 53:
-#line 417 "jucompiler.y"
+#line 394 "jucompiler.y"
                                                                                                         {if((yyvsp[-1].node)!=NULL) {
 																		(yyval.node)=(yyvsp[-1].node);
 																		add_sibling((yyval.node), (yyvsp[0].node));
@@ -2168,265 +2145,265 @@ yyreduce:
 																	else {
 																		(yyval.node)=(yyvsp[-1].node);
 																	}}
-#line 2172 "y.tab.c"
+#line 2149 "y.tab.c"
     break;
 
   case 54:
-#line 426 "jucompiler.y"
+#line 403 "jucompiler.y"
                                                                                                                 {(yyval.node) = create_node("Assign","");
 																	aux = create_node("Id",(yyvsp[-2].id));
 																	add_child((yyval.node), aux);
 																	add_sibling(aux, (yyvsp[0].node));}
-#line 2181 "y.tab.c"
+#line 2158 "y.tab.c"
     break;
 
   case 55:
-#line 432 "jucompiler.y"
+#line 409 "jucompiler.y"
                                                                                                 {(yyval.node) = create_node("ParseArgs","");
 																	aux = create_node("Id",(yyvsp[-4].id));
 																	add_child((yyval.node), aux);
 																	add_sibling(aux, (yyvsp[-2].node));}
-#line 2190 "y.tab.c"
+#line 2167 "y.tab.c"
     break;
 
   case 56:
-#line 436 "jucompiler.y"
+#line 413 "jucompiler.y"
                                                                                                                 {(yyval.node) = NULL;
 																	flag_erro = 1;}
-#line 2197 "y.tab.c"
+#line 2174 "y.tab.c"
     break;
 
   case 57:
-#line 440 "jucompiler.y"
+#line 417 "jucompiler.y"
                                                                                                                         {(yyval.node) = (yyvsp[0].node);}
-#line 2203 "y.tab.c"
+#line 2180 "y.tab.c"
     break;
 
   case 58:
-#line 441 "jucompiler.y"
+#line 418 "jucompiler.y"
                                                                                                                         {(yyval.node) = (yyvsp[0].node);}
-#line 2209 "y.tab.c"
+#line 2186 "y.tab.c"
     break;
 
   case 59:
-#line 444 "jucompiler.y"
+#line 421 "jucompiler.y"
                                                                                         {(yyval.node) = create_node("Add", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2217 "y.tab.c"
+#line 2194 "y.tab.c"
     break;
 
   case 60:
-#line 447 "jucompiler.y"
+#line 424 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Sub", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2225 "y.tab.c"
+#line 2202 "y.tab.c"
     break;
 
   case 61:
-#line 450 "jucompiler.y"
+#line 427 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Mul", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2233 "y.tab.c"
+#line 2210 "y.tab.c"
     break;
 
   case 62:
-#line 453 "jucompiler.y"
+#line 430 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Div", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2241 "y.tab.c"
+#line 2218 "y.tab.c"
     break;
 
   case 63:
-#line 456 "jucompiler.y"
+#line 433 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Mod", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2249 "y.tab.c"
+#line 2226 "y.tab.c"
     break;
 
   case 64:
-#line 459 "jucompiler.y"
+#line 436 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("And", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2257 "y.tab.c"
+#line 2234 "y.tab.c"
     break;
 
   case 65:
-#line 462 "jucompiler.y"
+#line 439 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Or", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2265 "y.tab.c"
+#line 2242 "y.tab.c"
     break;
 
   case 66:
-#line 465 "jucompiler.y"
+#line 442 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Xor", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2273 "y.tab.c"
+#line 2250 "y.tab.c"
     break;
 
   case 67:
-#line 468 "jucompiler.y"
+#line 445 "jucompiler.y"
                                                                                                 {(yyval.node) = create_node("Lshift", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2281 "y.tab.c"
+#line 2258 "y.tab.c"
     break;
 
   case 68:
-#line 471 "jucompiler.y"
+#line 448 "jucompiler.y"
                                                                                                 {(yyval.node) = create_node("Rshift", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2289 "y.tab.c"
+#line 2266 "y.tab.c"
     break;
 
   case 69:
-#line 474 "jucompiler.y"
+#line 451 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Eq", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2297 "y.tab.c"
+#line 2274 "y.tab.c"
     break;
 
   case 70:
-#line 477 "jucompiler.y"
+#line 454 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Ge", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2305 "y.tab.c"
+#line 2282 "y.tab.c"
     break;
 
   case 71:
-#line 480 "jucompiler.y"
+#line 457 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Gt", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2313 "y.tab.c"
+#line 2290 "y.tab.c"
     break;
 
   case 72:
-#line 483 "jucompiler.y"
+#line 460 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Le", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2321 "y.tab.c"
+#line 2298 "y.tab.c"
     break;
 
   case 73:
-#line 486 "jucompiler.y"
+#line 463 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Lt", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2329 "y.tab.c"
+#line 2306 "y.tab.c"
     break;
 
   case 74:
-#line 489 "jucompiler.y"
+#line 466 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Ne", "");
 																	add_child((yyval.node), (yyvsp[-2].node));
 																	add_sibling((yyvsp[-2].node), (yyvsp[0].node));}
-#line 2337 "y.tab.c"
+#line 2314 "y.tab.c"
     break;
 
   case 75:
-#line 492 "jucompiler.y"
+#line 469 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Plus", "");
 																	add_child((yyval.node), (yyvsp[0].node));}
-#line 2344 "y.tab.c"
+#line 2321 "y.tab.c"
     break;
 
   case 76:
-#line 494 "jucompiler.y"
+#line 471 "jucompiler.y"
                                                                                                         {(yyval.node) = create_node("Minus", "");
 																	add_child((yyval.node), (yyvsp[0].node));}
-#line 2351 "y.tab.c"
+#line 2328 "y.tab.c"
     break;
 
   case 77:
-#line 496 "jucompiler.y"
+#line 473 "jucompiler.y"
                                                                                                                         {(yyval.node) = create_node("Not", "");
 																	add_child((yyval.node), (yyvsp[0].node));}
-#line 2358 "y.tab.c"
+#line 2335 "y.tab.c"
     break;
 
   case 78:
-#line 498 "jucompiler.y"
+#line 475 "jucompiler.y"
                                                                                                                         {(yyval.node) = (yyvsp[-1].node);}
-#line 2364 "y.tab.c"
+#line 2341 "y.tab.c"
     break;
 
   case 79:
-#line 499 "jucompiler.y"
+#line 476 "jucompiler.y"
                                                                                                                         {(yyval.node) = NULL;
 																	flag_erro = 1;}
-#line 2371 "y.tab.c"
+#line 2348 "y.tab.c"
     break;
 
   case 80:
-#line 501 "jucompiler.y"
+#line 478 "jucompiler.y"
                                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 2377 "y.tab.c"
+#line 2354 "y.tab.c"
     break;
 
   case 81:
-#line 502 "jucompiler.y"
+#line 479 "jucompiler.y"
                                                                                                                                         {(yyval.node) = create_node("Id", (yyvsp[0].id));}
-#line 2383 "y.tab.c"
+#line 2360 "y.tab.c"
     break;
 
   case 82:
-#line 503 "jucompiler.y"
+#line 480 "jucompiler.y"
                                                                                                                         {(yyval.node) = create_node("Length", "");
 																	add_child((yyval.node), create_node("Id", (yyvsp[-1].id)));}
-#line 2390 "y.tab.c"
+#line 2367 "y.tab.c"
     break;
 
   case 83:
-#line 505 "jucompiler.y"
+#line 482 "jucompiler.y"
                                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 2396 "y.tab.c"
+#line 2373 "y.tab.c"
     break;
 
   case 84:
-#line 508 "jucompiler.y"
+#line 485 "jucompiler.y"
                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 2402 "y.tab.c"
+#line 2379 "y.tab.c"
     break;
 
   case 85:
-#line 509 "jucompiler.y"
+#line 486 "jucompiler.y"
                                                                                                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 2408 "y.tab.c"
+#line 2385 "y.tab.c"
     break;
 
   case 86:
-#line 512 "jucompiler.y"
+#line 489 "jucompiler.y"
                                                                                                                         {(yyval.node) = create_node("DecLit", (yyvsp[0].intlit));}
-#line 2414 "y.tab.c"
+#line 2391 "y.tab.c"
     break;
 
   case 87:
-#line 513 "jucompiler.y"
+#line 490 "jucompiler.y"
                                                                                                                                 {(yyval.node) = create_node("RealLit", (yyvsp[0].reallit));}
-#line 2420 "y.tab.c"
+#line 2397 "y.tab.c"
     break;
 
   case 88:
-#line 514 "jucompiler.y"
+#line 491 "jucompiler.y"
                                                                                                                                 {(yyval.node) = create_node("BoolLit", (yyvsp[0].boollit));}
-#line 2426 "y.tab.c"
+#line 2403 "y.tab.c"
     break;
 
 
-#line 2430 "y.tab.c"
+#line 2407 "y.tab.c"
 
       default: break;
     }
@@ -2658,5 +2635,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 517 "jucompiler.y"
+#line 494 "jucompiler.y"
 

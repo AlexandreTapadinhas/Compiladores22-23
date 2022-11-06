@@ -12,3 +12,9 @@ Program
 ......Assign
 ........Id(i)
 ........DecLit(1)
+......Assign
+........Id(j)
+........RealLit(1.0)
+......Assign
+........Id(k)
+........BoolLit(true)
