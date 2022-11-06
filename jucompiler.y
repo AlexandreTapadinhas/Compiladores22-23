@@ -60,16 +60,16 @@
 		parent->number_children++;
 		child->parent = parent;
 
-		aux = child->bro;
+		// aux = child->bro;
 
-		while (aux != NULL)
-		{ // iterates over child's siblings to add parent as a parent to them too
-			aux->parent = parent;
-			parent->children[parent->number_children] = aux;
-			parent->number_children++;
-			// printf("added child %s(%s) to parent %s(%s)\n\n", aux->type, aux->value, parent->type, parent->value);
-			aux = aux->bro;
-		}
+		// while (aux != NULL)
+		// { // iterates over child's siblings to add parent as a parent to them too
+		// 	aux->parent = parent;
+		// 	parent->children[parent->number_children] = aux;
+		// 	parent->number_children++;
+		// 	// printf("added child %s(%s) to parent %s(%s)\n\n", aux->type, aux->value, parent->type, parent->value);
+		// 	aux = aux->bro;
+		// }
 
 		// printf("added child %s(%s) of parent %s(%s)\n\n", child->type, child->value, parent->type, parent->value);
 
@@ -87,8 +87,14 @@
 				aux = aux->bro;
 			}
 			aux->bro = s2;
+			if (s1->parent != NULL) {
+			aux = s1->parent;
+			s2->parent = aux;
+			aux->children[aux->number_children] = s2;
+			s2->parent->number_children++;
 		}
-		// if(s1!=NULL && s2!=NULL) printf("added %s(%s) and %s(%s) as siblings\n", s1->type, s1->value,s2->type, s2->value);
+		}
+		//if(s1!=NULL && s2!=NULL) printf("added %s(%s) and %s(%s) as siblings\n", s1->type, s1->value,s2->type, s2->value);
 		return s1;
 	}
 
@@ -111,7 +117,7 @@
 		if (root == NULL)
 			return;
 
-		// printf("node=%s children=%d\n", root->type, root->number_children);
+		//printf("node=%s children=%d\n", root->type, root->number_children);
 
 		// puts the appropriate number of points
 

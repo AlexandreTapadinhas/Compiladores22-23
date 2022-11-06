@@ -1,3 +1,16 @@
 Line 3, col 19: invalid escape sequence (\|)
 syntax error: "
 syntax error: "
+Program
+..Id(Teste)
+..MethodDecl
+....MethodHeader
+......Int
+......Id(main)
+......MethodParams
+........ParamDecl
+..........StringArray
+..........Id(args)
+....MethodBody
+......Print
+........StrLit(")

@@ -1,2 +1,21 @@
 syntax error: *
 syntax error: [
+Program
+..Id(Factorial)
+..MethodDecl
+....MethodHeader
+......Int
+......Id(factorial)
+......MethodParams
+........ParamDecl
+..........Int
+..........Id(n)
+....MethodBody
+......If
+........Eq
+..........Id(n)
+..........DecLit(0)
+........Block
+..........Return
+............DecLit(1)
+........Block

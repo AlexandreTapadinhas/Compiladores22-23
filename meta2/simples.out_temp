@@ -1,0 +1,14 @@
+Program
+..Id(Factorial)
+..MethodDecl
+....MethodHeader
+......Int
+......Id(covid19)
+......MethodParams
+........ParamDecl
+..........Int
+..........Id(n)
+....MethodBody
+......VarDecl
+........Int
+........Id(oi)

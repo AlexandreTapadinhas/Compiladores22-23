@@ -1,1 +1,12 @@
 syntax error: =
+Program
+..Id(assign_error)
+..MethodDecl
+....MethodHeader
+......Void
+......Id(main)
+......MethodParams
+........ParamDecl
+..........StringArray
+..........Id(args)
+....MethodBody
