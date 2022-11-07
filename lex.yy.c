@@ -1331,7 +1331,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case YY_STATE_EOF(MULTIPLECOMMENT):
 #line 105 "jucompiler.l"
-{printf("Line %d, col %d: unterminated comment\n", auxLine, auxCol);col+=yyleng;BEGIN 0;}
+{printf("Line %d, col %d: unterminated comment\n", auxLine, auxCol);BEGIN 0;}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
@@ -2381,35 +2381,6 @@ void yyfree (void * ptr )
 
 #line 116 "jucompiler.l"
 
-
-int main(int argc, char *argv[]){
-    if (argc > 1) {
-		if (strcmp(argv[1],"-l") == 0) {
-			debugMode = 1;
-			yylex();
-		}
-		else if (strcmp(argv[1],"-t") == 0) {
-			debugMode = 2;
-			yyparse();
-		}
-		else if (strcmp(argv[1], "-e1") == 0) {
-			debugMode = 0;
-			while (yylex() != 0) {
-				;
-			}
-		}
-		else if (strcmp(argv[1], "-e2") == 0) {
-			debugMode = 0;
-			yyparse();
-			yylex();
-		}
-	}
-	else {
-		debugMode = 0;
-		yyparse();
-		yylex();
-	}
-}
 
 int yywrap() {
     return 1;

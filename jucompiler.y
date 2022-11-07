@@ -21,15 +21,14 @@
 
 	typedef struct node
 	{
-		struct node *children; // list of children of this node
-		int number_children;                 // to access the next empty child
+		struct node *children; 
 		struct node *bro;
 		struct node *parent;
 		char *type;
 		char *value;
 	} node;
 
-		// function to create a new node of type "type" and value "value"
+	// function to create a new node of type "type" and value "value"
 	struct node *create_node(char *type, char *value)
 	{
 
@@ -39,7 +38,6 @@
 
 		new->value = value;
 		new->type = type;
-		new->number_children = 0;
 		new->parent = NULL;
 		new->children = NULL;
 		new->bro = NULL;
@@ -51,19 +49,16 @@
 	// function to add a new child to the node parent, with type "type" and value "value"
 	struct node *add_child(struct node *parent, struct node *child)
 	{
-		struct node *aux;
-
 		if (child == NULL || parent == NULL)
 			return NULL;
 
 		parent->children= child;
-		parent->number_children++;
 		child->parent = parent;
 
 		return parent;
 	}
 
-	struct node *add_sibling(struct node *s1, struct node *s2)
+	struct node *add_bro(struct node *s1, struct node *s2)
 	{
 		struct node *aux = s1;
 
@@ -76,7 +71,6 @@
 			aux->bro = s2;
 			if (s1->parent != NULL) {
 			s2->parent = s1->parent;
-			s2->parent->number_children++;
 		}
 		}
 		
@@ -85,7 +79,7 @@
 	}
 
 	// function to get the number of siblings of a given node
-	int get_number_siblings(struct node *node)
+	int get_number_of_bros(struct node *node)
 	{
 		int count = 0;
 		while (node != NULL) {
@@ -116,7 +110,6 @@
 		
 		aux = root->children;
 		while (aux != NULL) {
-			struct node * aux_free = aux;
 			print_node(aux, depth+1);
 			aux = aux->bro;
 		}
@@ -165,42 +158,37 @@ Program:	CLASS ID LBRACE ProgramScript RBRACE					{
 																	root = create_node("Program","");
 																	aux = create_node("Id",$2);
 																	add_child (root, aux);
-																	add_sibling (aux, $4);
-																	$$ = root;
-																	if (debugMode == 2 && flag_erro == 0) {
-																		print_node($$, 0);
-																	}
+																	add_bro (aux, $4);
 																	}
 		;
 
 ProgramScript: 	/* empty */											{$$ = NULL;}
 			|	MethodDecl ProgramScript							{$$ = $1;
-																	add_sibling($$, $2);}
+																	add_bro($$, $2);}
 			|	FieldDecl ProgramScript								{$$ = $1;
-																	add_sibling($$, $2);}
+																	add_bro($$, $2);}
 			|	SEMICOLON ProgramScript								{$$ = $2;}
 			;
 
 MethodDecl:	PUBLIC STATIC MethodHeader MethodBody					{$$ = create_node( "MethodDecl","");
 																	add_child($$, $3);
-																	add_sibling($3, $4);
+																	add_bro($3, $4);
 																	}
 		;
 
 FieldDecl:	PUBLIC STATIC Type ID FieldDecl2 SEMICOLON				{$$ = create_node( "FieldDecl", "");
 																	add_child($$, $3);
-																	add_sibling($3, create_node("Id",$4));
+																	add_bro($3, create_node("Id",$4));
 																	if ($5 != NULL){
 																		aux = $5;
 																		while (aux != NULL) {
-																			struct node * aux1 = create_node("FieldDecl","");
-																			struct node * aux2 = create_node($3->type, $3->value);
-																			add_child(aux1, aux2);
-																			add_sibling(aux2, create_node("Id", aux->value));
-																			add_sibling($$, aux1);
+																			struct node * fieldDecl = create_node("FieldDecl","");
+																			struct node * type = create_node($3->type, $3->value);
+																			add_child(fieldDecl, type);
+																			add_bro(type, create_node("Id", aux->value));
+																			add_bro($$, fieldDecl);
 																			aux = aux->bro;
 																		}
-																		free(aux);
 																	}
 																	}
 		|	error SEMICOLON											{$$ = NULL; flag_erro = 1;}
@@ -208,7 +196,7 @@ FieldDecl:	PUBLIC STATIC Type ID FieldDecl2 SEMICOLON				{$$ = create_node( "Fie
 
 FieldDecl2:	/* empty */												{$$ = NULL;}
 		|	COMMA ID FieldDecl2										{$$ = create_node("Id", $2);
-																	add_sibling($$, $3);}
+																	add_bro($$, $3);}
 		;
 
 Type:	BOOL														{$$ = create_node("Bool","");}
@@ -218,17 +206,17 @@ Type:	BOOL														{$$ = create_node("Bool","");}
 
 MethodHeader:	Type ID LPAR MethodHeader2 RPAR						{$$ = create_node("MethodHeader", "");
 																	add_child($$,$1);
-																	add_sibling($1, create_node("Id", $2));
+																	add_bro($1, create_node("Id", $2));
 																	aux = create_node("MethodParams", "");
-																	add_sibling($1, aux);
+																	add_bro($1, aux);
 																	add_child(aux, $4);}
 			|	VOID ID LPAR MethodHeader2 RPAR						{$$ = create_node("MethodHeader", "");
 																	aux = create_node("Void", "");
 																	add_child($$, aux);
-																	add_sibling(aux, create_node("Id", $2));
-																	struct node * aux2 = create_node("MethodParams", "");
-																	add_sibling(aux, aux2);
-																	add_child(aux2, $4);}
+																	add_bro(aux, create_node("Id", $2));
+																	struct node * methodParams = create_node("MethodParams", "");
+																	add_bro(aux, methodParams);
+																	add_child(methodParams, $4);}
 			;
 
 MethodHeader2:	/* empty */											{$$ = NULL;}
@@ -239,20 +227,20 @@ MethodHeader2:	/* empty */											{$$ = NULL;}
 FormalParams:	Type ID FormalParams2								{$$ = create_node("ParamDecl","");
 																	add_child($$, $1);
 																	aux = create_node("Id",$2);
-																	add_sibling($1, aux);
-																	add_sibling($$, $3);}
+																	add_bro($1, aux);
+																	add_bro($$, $3);}
 			|	STRING LSQ RSQ ID									{$$ = create_node("ParamDecl","");
 																	aux = create_node("StringArray","");
 																	add_child($$, aux);
-																	add_sibling(aux, create_node("Id",$4));}
+																	add_bro(aux, create_node("Id",$4));}
 			;
 
 FormalParams2:	/* empty */											{$$ = NULL;}
 			|	COMMA Type ID FormalParams2 						{$$ = create_node("ParamDecl","");
 																	aux = create_node("Id",$3);
 																	add_child($$, $2);
-																	add_sibling($2, aux);
-																	add_sibling($$, $4);}
+																	add_bro($2, aux);
+																	add_bro($$, $4);}
 			;
 
 MethodBody:	LBRACE MethodBody2 RBRACE								{$$ = create_node("MethodBody","");
@@ -262,38 +250,37 @@ MethodBody:	LBRACE MethodBody2 RBRACE								{$$ = create_node("MethodBody","");
 MethodBody2: 	/* empty */											{$$ = NULL;}
 			|	Statement MethodBody2								{if ($1 != NULL){
 																		$$ = $1;
-																		add_sibling($$, $2);
+																		add_bro($$, $2);
 																		}
 																	else {
 																		$$ = $2;
 																	}}
 			|	VarDecl MethodBody2									{$$ = $1;
-																	add_sibling($$, $2);}
+																	add_bro($$, $2);}
 			;
 
 VarDecl:	Type ID VarDecl2 SEMICOLON								{$$ = create_node("VarDecl", "");
 																	add_child($$, $1);
-																	add_sibling($1, create_node("Id", $2));
+																	add_bro($1, create_node("Id", $2));
 																	if ($3 != NULL){
 																		aux = $3;
 																		while (aux != NULL) {
-																			struct node * aux1 = create_node("VarDecl", "");
-																			struct node * aux2 = create_node($1->type, $1->value);
-																			add_child(aux1, aux2);
-																			add_sibling(aux2, create_node("Id", aux->value));
-																			add_sibling($$, aux1);
+																			struct node * varDecl = create_node("VarDecl", "");
+																			struct node * type = create_node($1->type, $1->value);
+																			add_child(varDecl, type);
+																			add_bro(type, create_node("Id", aux->value));
+																			add_bro($$, varDecl);
 																			aux = aux->bro;
 																		}
-																		free(aux);
 																	}}
 		;
 
 VarDecl2:	/* empty */												{$$ = NULL;}
 		|	COMMA ID VarDecl2										{$$ = create_node("Id",$2);
-																	add_sibling($$, $3);}
+																	add_bro($$, $3);}
 		;
 
-Statement:	LBRACE Statement2 RBRACE								{if ($2 != NULL && get_number_siblings($2) > 1) {
+Statement:	LBRACE Statement2 RBRACE								{if ($2 != NULL && get_number_of_bros($2) > 1) {
 																		aux = create_node("Block","");
 																		$$ = aux;
 																		add_child(aux, $2);
@@ -304,48 +291,48 @@ Statement:	LBRACE Statement2 RBRACE								{if ($2 != NULL && get_number_sibling
 		|	IF LPAR Expr RPAR Statement %prec ELSE					{$$ = create_node("If","");
 																	add_child($$,$3);
 																	aux = create_node("Block","");
-																	if ($5 != NULL && get_number_siblings($5) == 1 ) {
-																		add_sibling($3, $5);
-																		add_sibling($5, aux);
+																	if ($5 != NULL && get_number_of_bros($5) == 1 ) {
+																		add_bro($3, $5);
+																		add_bro($5, aux);
 																	}
 																	else {
-																		add_sibling($3, aux);
+																		add_bro($3, aux);
 																		add_child(aux, $5);
-																		add_sibling(aux, create_node("Block",""));
+																		add_bro(aux, create_node("Block",""));
 																	}}
 		|	IF LPAR Expr RPAR Statement ELSE Statement				{$$ = create_node("If","");
 																	add_child($$,$3);
 																	aux = create_node("Block","");
-																	if ($5 != NULL && get_number_siblings($5) == 1 ) {
-																		add_sibling($3, $5);
-																		if ($7 != NULL && get_number_siblings($7) == 1) {
-																			add_sibling($5, $7);
+																	if ($5 != NULL && get_number_of_bros($5) == 1 ) {
+																		add_bro($3, $5);
+																		if ($7 != NULL && get_number_of_bros($7) == 1) {
+																			add_bro($5, $7);
 																		}
 																		else {
-																			add_sibling($5, aux);
+																			add_bro($5, aux);
 																			add_child(aux, $7);
 																		}
 																	}
 																	else {
-																		add_sibling($3, aux);
+																		add_bro($3, aux);
 																		add_child(aux, $5);
-																		if ($7 != NULL && get_number_siblings($7) == 1 ) {
-																			add_sibling(aux, $7);
+																		if ($7 != NULL && get_number_of_bros($7) == 1 ) {
+																			add_bro(aux, $7);
 																		}
 																		else {
-																			struct node * aux2 = create_node("Block","");
-																			add_sibling(aux, aux2);
-																			add_child(aux2, $7);
+																			struct node * block = create_node("Block","");
+																			add_bro(aux, block);
+																			add_child(block, $7);
 																		}
 																	}}
 		|	WHILE LPAR Expr RPAR Statement							{$$ = create_node("While","");
 																	add_child($$, $3);
-																	if ($5 != NULL && get_number_siblings($5) == 1)  {
-																		add_sibling($3, $5);
+																	if ($5 != NULL && get_number_of_bros($5) == 1)  {
+																		add_bro($3, $5);
 																	}
 																	else {
 																		aux = create_node("Block","");
-																		add_sibling($3, aux);
+																		add_bro($3, aux);
 																		add_child(aux, $5);
 																	}}
 		|	RETURN ExprReturn SEMICOLON								{$$ = create_node("Return","");
@@ -359,7 +346,7 @@ Statement:	LBRACE Statement2 RBRACE								{if ($2 != NULL && get_number_sibling
 Statement2:	/* empty */												{$$ = NULL;}
 		|	Statement Statement2									{if ($1 != NULL) {
 																		$$ = $1;
-																		add_sibling($$, $2);
+																		add_bro($$, $2);
 																	}
 																	else {
 																		$$ = $2;
@@ -383,20 +370,20 @@ StatementPrint:	Expr												{$$ = $1;}
 MethodInvocation:	ID LPAR MethodInvocation2 RPAR					{$$ = create_node("Call","");
 																	aux = create_node("Id",$1);
 																	add_child($$, aux);
-																	if($3 != NULL)add_sibling(aux, $3);}
+																	if($3 != NULL)add_bro(aux, $3);}
 				|	ID LPAR error RPAR								{$$ = NULL;
 																	flag_erro = 1;}
 				;
 
 MethodInvocation2:	/* empty */										{$$ = NULL;}
 				|	Expr MethodInvocationExpr						{$$ = $1;
-																	add_sibling($$, $2);}
+																	add_bro($$, $2);}
 				;
 
 MethodInvocationExpr:	/* empty */									{$$ = NULL;}
 					|	COMMA Expr MethodInvocationExpr				{if($2!=NULL) {
 																		$$=$2;
-																		add_sibling($$, $3);
+																		add_bro($$, $3);
 																	}
 																	else {
 																		$$=$2;
@@ -406,13 +393,13 @@ MethodInvocationExpr:	/* empty */									{$$ = NULL;}
 Assignment:	ID ASSIGN Expr											{$$ = create_node("Assign","");
 																	aux = create_node("Id",$1);
 																	add_child($$, aux);
-																	add_sibling(aux, $3);}
+																	add_bro(aux, $3);}
 		;
 
 ParseArgs:	PARSEINT LPAR ID LSQ Expr RSQ RPAR						{$$ = create_node("ParseArgs","");
 																	aux = create_node("Id",$3);
 																	add_child($$, aux);
-																	add_sibling(aux, $5);}
+																	add_bro(aux, $5);}
 		|	PARSEINT LPAR error RPAR								{$$ = NULL;
 																	flag_erro = 1;}
 		;
@@ -423,52 +410,52 @@ Expr:	Assignment													{$$ = $1;}
 
 ExprOperations:	ExprOperations PLUS ExprOperations					{$$ = create_node("Add", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations MINUS ExprOperations					{$$ = create_node("Sub", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations STAR ExprOperations					{$$ = create_node("Mul", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations DIV ExprOperations					{$$ = create_node("Div", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations MOD ExprOperations					{$$ = create_node("Mod", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations AND ExprOperations					{$$ = create_node("And", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations OR ExprOperations					{$$ = create_node("Or", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations XOR ExprOperations					{$$ = create_node("Xor", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations LSHIFT ExprOperations				{$$ = create_node("Lshift", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations RSHIFT ExprOperations				{$$ = create_node("Rshift", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations EQ ExprOperations					{$$ = create_node("Eq", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations GE ExprOperations					{$$ = create_node("Ge", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations GT ExprOperations					{$$ = create_node("Gt", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations LE ExprOperations					{$$ = create_node("Le", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations LT ExprOperations					{$$ = create_node("Lt", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	ExprOperations NE ExprOperations					{$$ = create_node("Ne", "");
 																	add_child($$, $1);
-																	add_sibling($1, $3);}
+																	add_bro($1, $3);}
 			|	PLUS ExprOperations %prec NOT						{$$ = create_node("Plus", "");
 																	add_child($$, $2);}
 			|	MINUS ExprOperations %prec NOT						{$$ = create_node("Minus", "");
@@ -495,3 +482,34 @@ ExprLit:	INTLIT													{$$ = create_node("DecLit", $1);}
 		;
 
 %%
+
+
+int main(int argc, char *argv[]){
+    if (argc > 1) {
+		if (strcmp(argv[1],"-l") == 0) {
+			debugMode = 1;
+			yylex();
+		}
+		else if (strcmp(argv[1],"-t") == 0) {
+			debugMode = 2;
+			yyparse();
+			if (debugMode == 2 && flag_erro == 0) {
+				print_node(root, 0);
+			}
+		}
+		else if (strcmp(argv[1], "-e1") == 0) {
+			debugMode = 0;
+			while(yylex());
+		}
+		else if (strcmp(argv[1], "-e2") == 0) {
+			debugMode = 0;
+			yyparse();
+			yylex();
+		}
+	}
+	else {
+		debugMode = 0;
+		yyparse();
+		yylex();
+	}
+}

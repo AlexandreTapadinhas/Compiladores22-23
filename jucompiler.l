@@ -95,14 +95,14 @@ reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"swit
 
 
 "//"									      {BEGIN COMMENT;col+=yyleng;}
-<COMMENT>\n|\r|(\r\n)				{BEGIN 0;col=1;line++;}
+<COMMENT>\n|\r|(\r\n)					{BEGIN 0;col=1;line++;}
 <COMMENT>.								  {;}
 
 "/*"									          {BEGIN MULTIPLECOMMENT; auxCol=col; auxLine=line; col+=yyleng;}
 <MULTIPLECOMMENT>\n|\r|(\r\n)		{col=1;line++;}
 <MULTIPLECOMMENT>"*/"				    {col+=yyleng;BEGIN 0;}
 <MULTIPLECOMMENT>.						  {col+=yyleng;}
-<MULTIPLECOMMENT><<EOF>>				{printf("Line %d, col %d: unterminated comment\n", auxLine, auxCol);col+=yyleng;BEGIN 0;}
+<MULTIPLECOMMENT><<EOF>>				{printf("Line %d, col %d: unterminated comment\n", auxLine, auxCol);BEGIN 0;}
 
 \"										      {BEGIN STRLIT_ST; strlit_error = 0; strlit = yytext; col+=yyleng; auxCol=col-1;}
 <STRLIT_ST>\"								  {if(!debugMode && !strlit_error)printf("STRLIT(%s)\n",strlit);col+=yyleng; BEGIN 0; if(debugMode != 1 && !strlit_error){yylval.strlit = strdup(strlit); yytext=strlit;return STRLIT;}}
@@ -114,35 +114,6 @@ reserved			"++"|"--"|"null"|"Integer"|"System"|"abstract"|"continue"|"new"|"swit
 .									        {printf("Line %d, col %d: illegal character (%s)\n", line, col, yytext); col+=yyleng;}
 
 %%
-
-int main(int argc, char *argv[]){
-    if (argc > 1) {
-		if (strcmp(argv[1],"-l") == 0) {
-			debugMode = 1;
-			yylex();
-		}
-		else if (strcmp(argv[1],"-t") == 0) {
-			debugMode = 2;
-			yyparse();
-		}
-		else if (strcmp(argv[1], "-e1") == 0) {
-			debugMode = 0;
-			while (yylex() != 0) {
-				;
-			}
-		}
-		else if (strcmp(argv[1], "-e2") == 0) {
-			debugMode = 0;
-			yyparse();
-			yylex();
-		}
-	}
-	else {
-		debugMode = 0;
-		yyparse();
-		yylex();
-	}
-}
 
 int yywrap() {
     return 1;
